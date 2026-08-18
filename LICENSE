@@ -1,0 +1,19 @@
+GNU GENERAL PUBLIC LICENSE
+Version 2, June 1991
+
+Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+Everyone is permitted to copy and distribute verbatim copies
+of this license document, but changing it is not allowed.
+
+This repository contains Linux kernel device-tree sources and
+userspace helpers. Kernel DTS material is licensed under GPL-2.0-only,
+matching the upstream Linux kernel and the Armbian 0011 kebab DTS
+(d4n1 / Jiali Chen). Scripts and documentation in this repository
+are also licensed under GPL-2.0-only unless a file says otherwise.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+The full GPLv2 text is at:
+https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt

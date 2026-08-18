@@ -1,0 +1,12 @@
+# Copy to /etc/netplan/20-wifi.yaml on the phone and replace the placeholders.
+# Do not commit the copied file.
+network:
+  version: 2
+  renderer: networkd
+  wifis:
+    wlan0:
+      dhcp4: true
+      dhcp6: true
+      access-points:
+        "YOUR_SSID":
+          password: "YOUR_PASSPHRASE"

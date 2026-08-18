@@ -1,0 +1,13 @@
+[Unit]
+Description=kebab power-key toggle and idle display blank
+After=multi-user.target systemd-logind.service
+Wants=systemd-logind.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/kebab-powerd
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target

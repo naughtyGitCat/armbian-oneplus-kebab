@@ -1,0 +1,27 @@
+name: watch-armbian
+
+# Follow armbian/build kebab DTS. A full sm8250 image compile does not fit
+# on a GitHub-hosted runner (disk + hours). This job fetches the current
+# 0011 kebab DTS and checks that our QCA6390 patch still applies.
+# Re-run by hand after an Armbian bump, or wait for the weekly cron.
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+  push:
+    paths:
+      - "dts/**"
+      - "scripts/check-armbian-dts.sh"
+      - ".github/workflows/watch-armbian.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  dts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Track kebab DTS and apply local patch
+        run: bash scripts/check-armbian-dts.sh

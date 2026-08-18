@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+"""OnePlus 8T (kebab) power-key and idle-blank daemon.
+
+Short press: toggle framebuffer blank (lock / wake).
+Hold 3s: force poweroff.
+No key/volume activity for 5 minutes while the screen is on: blank.
+"""
+
+from __future__ import annotations
+
+import os
+import select
+import struct
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+EV_KEY = 0x01
+KEY_POWER = 116
+KEY_VOLUMEDOWN = 114
+KEY_VOLUMEUP = 115
+EVENT_FMT = "qqHHi"
+EVENT_SIZE = struct.calcsize(EVENT_FMT)
+
+IDLE_BLANK_SEC = 300
+LONG_PRESS_SEC = 3.0
+DISPLAY_TOOL = "/usr/local/sbin/kebab-display"
+PWRKEY_NAME = "pm8941_pwrkey"
+ACTIVITY_NAMES = ("pm8941_pwrkey", "pm8941_resin", "gpio-keys")
+
+
+def log(msg: str) -> None:
+    print(msg, flush=True)
+
+
+def find_event_by_name(name: str) -> Path | None:
+    base = Path("/sys/class/input")
+    for node in base.glob("event*"):
+        name_file = node / "device" / "name"
+        try:
+            if name_file.read_text(encoding="utf-8").strip() == name:
+                return Path("/dev/input") / node.name
+        except OSError:
+            continue
+    return None
+
+
+STATE_PATH = Path("/run/kebab-display.state")
+
+
+def display_status() -> str:
+    try:
+        return STATE_PATH.read_text(encoding="utf-8").strip() or "on"
+    except OSError:
+        return "on"
+
+
+def display_cmd(cmd: str) -> None:
+    try:
+        subprocess.check_call([DISPLAY_TOOL, cmd])
+    except (OSError, subprocess.CalledProcessError) as exc:
+        log(f"display {cmd} failed: {exc}")
+
+
+def force_poweroff() -> None:
+    log("long-press: force poweroff")
+    # --force skips inhibitors; second --force skips the shutdown unit and
+    # goes straight to reboot(RB_POWER_OFF) if systemd is stuck.
+    subprocess.Popen(["systemctl", "poweroff", "--force"])
+    time.sleep(2)
+    try:
+        Path("/proc/sysrq-trigger").write_text("o", encoding="ascii")
+    except OSError:
+        pass
+
+
+def open_inputs() -> list[tuple[str, int]]:
+    opened: list[tuple[str, int]] = []
+    for name in ACTIVITY_NAMES:
+        path = find_event_by_name(name)
+        if path is None:
+            log(f"input {name} not found")
+            continue
+        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+        opened.append((name, fd))
+        log(f"watching {name} at {path}")
+    return opened
+
+
+def main() -> int:
+    if os.geteuid() != 0:
+        print("kebab-powerd must run as root", file=sys.stderr)
+        return 1
+
+    def write_sysfs(path: str, value: str) -> None:
+        try:
+            fd = os.open(path, os.O_WRONLY)
+            try:
+                os.write(fd, value.encode("ascii"))
+            finally:
+                os.close(fd)
+        except OSError as exc:
+            log(f"skip {path}: {exc}")
+
+    write_sysfs("/sys/module/kernel/parameters/consoleblank", str(IDLE_BLANK_SEC))
+    write_sysfs("/proc/sys/kernel/sysrq", "1")
+    if not STATE_PATH.exists():
+        STATE_PATH.write_text("on\n", encoding="ascii")
+
+    inputs = open_inputs()
+    if not inputs:
+        log("no input devices, exiting")
+        return 1
+
+    fds = [fd for _, fd in inputs]
+    fd_name = {fd: name for name, fd in inputs}
+
+    press_t0: float | None = None
+    long_fired = False
+    last_activity = time.monotonic()
+
+    log(
+        f"idle-blank={IDLE_BLANK_SEC}s long-press={LONG_PRESS_SEC}s "
+        f"display={display_status()}"
+    )
+
+    try:
+        while True:
+            timeout = 0.25
+            readable, _, _ = select.select(fds, [], [], timeout)
+            now = time.monotonic()
+
+            for fd in readable:
+                name = fd_name[fd]
+                while True:
+                    try:
+                        raw = os.read(fd, EVENT_SIZE)
+                    except BlockingIOError:
+                        break
+                    if len(raw) != EVENT_SIZE:
+                        break
+                    _sec, _usec, ev_type, code, value = struct.unpack(EVENT_FMT, raw)
+                    if ev_type != EV_KEY:
+                        continue
+                    last_activity = now
+
+                    if name != PWRKEY_NAME or code != KEY_POWER:
+                        continue
+
+                    if value == 1:
+                        press_t0 = now
+                        long_fired = False
+                        log("power down")
+                    elif value == 0:
+                        held = 0.0 if press_t0 is None else (now - press_t0)
+                        press_t0 = None
+                        if long_fired:
+                            log(f"power up after long-press ({held:.2f}s)")
+                            continue
+                        log(f"power up short ({held:.2f}s) → toggle")
+                        display_cmd("toggle")
+                        last_activity = time.monotonic()
+
+            if press_t0 is not None and not long_fired:
+                if (now - press_t0) >= LONG_PRESS_SEC:
+                    long_fired = True
+                    force_poweroff()
+
+            if (
+                press_t0 is None
+                and display_status() == "on"
+                and (now - last_activity) >= IDLE_BLANK_SEC
+            ):
+                log(f"idle {IDLE_BLANK_SEC}s → blank")
+                display_cmd("off")
+                last_activity = now
+    finally:
+        for _, fd in inputs:
+            os.close(fd)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

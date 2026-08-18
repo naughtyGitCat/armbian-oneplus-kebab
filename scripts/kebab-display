@@ -1,0 +1,52 @@
+#!/bin/sh
+# Blank / unblank the kebab simpledrm framebuffer console.
+# msm-mdss is not bound, so this is software blank + black fill.
+set -eu
+
+STATE=/run/kebab-display.state
+FB=/sys/class/graphics/fb0/blank
+FBDEV=/dev/fb0
+
+read_state() {
+	if [ -f "$STATE" ]; then
+		cat "$STATE"
+	else
+		echo on
+	fi
+}
+
+paint_black() {
+	[ -w "$FBDEV" ] || return 0
+	dd if=/dev/zero of="$FBDEV" bs=1024k count=12 status=none 2>/dev/null || true
+}
+
+display_on() {
+	echo 0 > "$FB" 2>/dev/null || true
+	setterm --blank=poke --term linux < /dev/tty1 2>/dev/null || true
+	echo on > "$STATE"
+}
+
+display_off() {
+	paint_black
+	echo 4 > "$FB" 2>/dev/null || true
+	setterm --blank=force --term linux < /dev/tty1 2>/dev/null || true
+	echo off > "$STATE"
+}
+
+cmd=${1:-status}
+case "$cmd" in
+	on) display_on ;;
+	off) display_off ;;
+	toggle)
+		if [ "$(read_state)" = off ]; then
+			display_on
+		else
+			display_off
+		fi
+		;;
+	status) read_state ;;
+	*)
+		echo "usage: $0 on|off|toggle|status" >&2
+		exit 2
+		;;
+esac

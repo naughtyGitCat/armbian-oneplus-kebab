@@ -1,0 +1,181 @@
+=== /dev/block/sda ===
+Model: SAMSUNG KLUEG8UHDB-C2D1 (scsi)
+Disk /dev/block/sda: 253GB
+Sector size (logical/physical): 4096B/4096B
+Partition Table: gpt
+Disk Flags: 
+
+Number  Start   End     Size    File system  Name             Flags
+ 1      24.6kB  32.8kB  8192B                ssd
+ 2      32.8kB  33.6MB  33.6MB  ext4         persist
+ 3      33.6MB  34.6MB  1049kB               misc
+ 4      34.6MB  35.2MB  524kB                keystore
+ 5      35.2MB  35.7MB  524kB                frp
+ 6      35.7MB  36.7MB  1049kB               param
+ 7      36.7MB  47.2MB  10.5MB               mdm_oem_dycnvbk
+ 8      47.2MB  57.7MB  10.5MB               mdm_oem_stanvbk
+ 9      57.7MB  372MB   315MB   ext4         modemdump
+10      372MB   439MB   67.1MB               carrier
+11      439MB   976MB   537MB   ext4         op2
+12      976MB   977MB   524kB                config
+13      977MB   1010MB  33.6MB  ext4         persist_bkp
+14      1010MB  1011MB  492kB                ALIGN_TO_512K
+15      1011MB  8527MB  7516MB               super
+16      8527MB  8632MB  105MB                recovery_a
+17      8632MB  8737MB  105MB                recovery_b
+18      8737MB  8737MB  65.5kB               vbmeta_system_a
+19      8737MB  8737MB  65.5kB               vbmeta_system_b
+20      8737MB  8754MB  16.8MB  ext4         metadata
+21      8754MB  8888MB  134MB                vm-system_a
+22      8888MB  9022MB  134MB                vm-system_b
+23      9022MB  9156MB  134MB                rawdump
+24      9156MB  10.2GB  1074MB  ext2         oem_cust1_a
+25      10.2GB  11.3GB  1074MB  ext2         oem_cust1_b
+26      11.3GB  11.6GB  315MB   ext2         oem_cust2_a
+27      11.6GB  11.9GB  315MB   ext2         oem_cust2_b
+28      11.9GB  253GB   241GB                userdata
+
+
+=== /dev/block/sdb ===
+Model: SAMSUNG KLUEG8UHDB-C2D1 (scsi)
+Disk /dev/block/sdb: 8389kB
+Sector size (logical/physical): 4096B/4096B
+Partition Table: gpt
+Disk Flags: 
+
+Number  Start   End     Size    File system  Name          Flags
+ 1      24.6kB  5267kB  5243kB               xbl_a
+ 2      5267kB  5399kB  131kB                xbl_config_a
+
+
+=== /dev/block/sdc ===
+Model: SAMSUNG KLUEG8UHDB-C2D1 (scsi)
+Disk /dev/block/sdc: 8389kB
+Sector size (logical/physical): 4096B/4096B
+Partition Table: gpt
+Disk Flags: 
+
+Number  Start   End     Size    File system  Name          Flags
+ 1      24.6kB  5267kB  5243kB               xbl_b
+ 2      5267kB  5399kB  131kB                xbl_config_b
+
+
+=== /dev/block/sdd ===
+Model: SAMSUNG KLUEG8UHDB-C2D1 (scsi)
+Disk /dev/block/sdd: 134MB
+Sector size (logical/physical): 4096B/4096B
+Partition Table: gpt
+Disk Flags: 
+
+Number  Start   End     Size    File system  Name             Flags
+ 1      24.6kB  131kB   106kB                ALIGN_TO_128K_1
+ 2      131kB   262kB   131kB                cdt
+ 3      262kB   2359kB  2097kB               ddr
+ 4      2359kB  3408kB  1049kB               mdmddr
+
+
+=== /dev/block/sde ===
+Model: SAMSUNG KLUEG8UHDB-C2D1 (scsi)
+Disk /dev/block/sde: 2684MB
+Sector size (logical/physical): 4096B/4096B
+Partition Table: gpt
+Disk Flags: 
+
+Number  Start   End     Size    File system  Name            Flags
+ 1      24.6kB  549kB   524kB                aop_a
+ 2      549kB   4743kB  4194kB               tz_a
+ 3      4743kB  13.1MB  8389kB               hyp_a
+ 4      13.1MB  550MB   537MB   fat16        modem_a         msftdata
+ 5      550MB   551MB   1049kB               bluetooth_a
+ 6      551MB   555MB   4194kB               mdtpsecapp_a
+ 7      555MB   589MB   33.6MB               mdtp_a
+ 8      589MB   597MB   8389kB               abl_a
+ 9      597MB   664MB   67.1MB  ext4         dsp_a
+10      664MB   665MB   524kB                keymaster_a
+11      665MB   765MB   101MB                boot_a
+12      765MB   766MB   524kB                cmnlib_a
+13      766MB   767MB   524kB                cmnlib64_a
+14      767MB   767MB   131kB                devcfg_a
+15      767MB   767MB   81.9kB               qupfw_a
+16      767MB   767MB   65.5kB               vbmeta_a
+17      767MB   792MB   25.2MB               dtbo_a
+18      792MB   794MB   2097kB               uefisecapp_a
+19      794MB   794MB   32.8kB               multiimgoem_a
+20      794MB   794MB   32.8kB               multiimgqti_a
+21      794MB   828MB   33.6MB               vm-linux_a
+22      828MB   828MB   131kB                featenabler_a
+23      828MB   830MB   2097kB               imagefv_a       hidden
+24      830MB   847MB   16.8MB               logo_a
+25      847MB   847MB   524kB                aop_b
+26      847MB   851MB   4194kB               tz_b
+27      851MB   860MB   8389kB               hyp_b
+28      860MB   1397MB  537MB   fat16        modem_b
+29      1397MB  1398MB  1049kB               bluetooth_b
+30      1398MB  1402MB  4194kB               mdtpsecapp_b
+31      1402MB  1435MB  33.6MB               mdtp_b
+32      1435MB  1444MB  8389kB               abl_b
+33      1444MB  1511MB  67.1MB  ext4         dsp_b
+34      1511MB  1511MB  524kB                keymaster_b
+35      1511MB  1612MB  101MB                boot_b
+36      1612MB  1613MB  524kB                cmnlib_b
+37      1613MB  1613MB  524kB                cmnlib64_b
+38      1613MB  1613MB  131kB                devcfg_b
+39      1613MB  1613MB  81.9kB               qupfw_b
+40      1613MB  1613MB  65.5kB               vbmeta_b
+41      1613MB  1639MB  25.2MB               dtbo_b
+42      1639MB  1641MB  2097kB               uefisecapp_b
+43      1641MB  1641MB  32.8kB               multiimgoem_b
+44      1641MB  1641MB  32.8kB               multiimgqti_b
+45      1641MB  1674MB  33.6MB               vm-linux_b
+46      1674MB  1675MB  131kB                featenabler_b
+47      1675MB  1677MB  2097kB               imagefv_b       hidden
+48      1677MB  1693MB  16.8MB               logo_b
+49      1693MB  1693MB  4096B                devinfo
+50      1693MB  1694MB  1049kB               dip
+51      1694MB  1695MB  262kB                apdp
+52      1695MB  1695MB  262kB                msadp
+53      1695MB  1729MB  33.6MB               spunvm
+54      1729MB  1729MB  4096B                limits
+55      1729MB  1729MB  4096B                limits-cdsp
+56      1729MB  1737MB  8389kB               logfs
+57      1737MB  1804MB  67.1MB               logdump
+58      1804MB  1804MB  131kB                storsec_a
+59      1804MB  1805MB  524kB                uefivarstore
+60      1805MB  1805MB  28.7kB               secdata
+61      1805MB  1805MB  131kB                vm-keystore
+62      1805MB  1809MB  4194kB               vm-data
+63      1809MB  1811MB  2097kB               mdm1oemnvbktmp
+64      1811MB  1878MB  67.1MB               aging_kernel
+65      1878MB  1912MB  33.6MB               aging_mod
+66      1912MB  2226MB  315MB                op1
+67      2226MB  2243MB  16.6MB               abl_log
+68      2243MB  2276MB  33.2MB               kernel_log
+69      2276MB  2293MB  16.6MB               android_log
+70      2293MB  2309MB  16.6MB               qsee_log
+71      2309MB  2326MB  16.6MB               hyp_log
+72      2326MB  2334MB  8290kB               reserve1
+73      2334MB  2351MB  16.6MB               reserve2
+74      2351MB  2367MB  16.6MB               reserve3
+75      2367MB  2384MB  16.6MB               reserve4
+76      2384MB  2384MB  131kB                storsec_b
+
+
+=== /dev/block/sdf ===
+Model: SAMSUNG KLUEG8UHDB-C2D1 (scsi)
+Disk /dev/block/sdf: 134MB
+Sector size (logical/physical): 4096B/4096B
+Partition Table: gpt
+Disk Flags: 
+
+Number  Start   End     Size    File system  Name             Flags
+ 1      24.6kB  131kB   106kB                ALIGN_TO_128K_2
+ 2      131kB   2228kB  2097kB               modemst1
+ 3      2228kB  4325kB  2097kB               modemst2
+ 4      4325kB  6423kB  2097kB               fsg
+ 5      6423kB  6554kB  131kB                fsc
+ 6      6554kB  8651kB  2097kB               mdm1m9kefs3
+ 7      8651kB  10.7MB  2097kB               mdm1m9kefs1
+ 8      10.7MB  12.8MB  2097kB               mdm1m9kefs2
+ 9      12.8MB  12.8MB  4096B                mdm1m9kefsc
+
+

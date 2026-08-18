@@ -1,0 +1,5 @@
+[Match]
+Driver=ath11k_pci
+
+[Link]
+Name=wlan0

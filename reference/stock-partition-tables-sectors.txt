@@ -1,0 +1,124 @@
+=== /dev/block/sda (sectors) ===
+Model: SAMSUNG KLUEG8UHDB-C2D1 (scsi)
+Disk /dev/block/sda: 61753344s
+Sector size (logical/physical): 4096B/4096B
+Partition Table: gpt
+Disk Flags: 
+
+Number  Start     End        Size       File system  Name             Flags
+ 1      6s        7s         2s                      ssd
+ 2      8s        8199s      8192s      ext4         persist
+ 3      8200s     8455s      256s                    misc
+ 4      8456s     8583s      128s                    keystore
+ 5      8584s     8711s      128s                    frp
+ 6      8712s     8967s      256s                    param
+ 7      8968s     11527s     2560s                   mdm_oem_dycnvbk
+ 8      11528s    14087s     2560s                   mdm_oem_stanvbk
+ 9      14088s    90887s     76800s     ext4         modemdump
+10      90888s    107271s    16384s                  carrier
+11      107272s   238343s    131072s    ext4         op2
+12      238344s   238471s    128s                    config
+13      238472s   246663s    8192s      ext4         persist_bkp
+14      246664s   246783s    120s                    ALIGN_TO_512K
+15      246784s   2081791s   1835008s                super
+16      2081792s  2107391s   25600s                  recovery_a
+17      2107392s  2132991s   25600s                  recovery_b
+18      2132992s  2133007s   16s                     vbmeta_system_a
+19      2133008s  2133023s   16s                     vbmeta_system_b
+20      2133024s  2137119s   4096s      ext4         metadata
+21      2137120s  2169887s   32768s                  vm-system_a
+22      2169888s  2202655s   32768s                  vm-system_b
+23      2202656s  2235423s   32768s                  rawdump
+24      2235424s  2497567s   262144s    ext2         oem_cust1_a
+25      2497568s  2759711s   262144s    ext2         oem_cust1_b
+26      2759712s  2836511s   76800s     ext2         oem_cust2_a
+27      2836512s  2913311s   76800s     ext2         oem_cust2_b
+28      2913312s  61753338s  58840027s               userdata
+
+
+=== /dev/block/sde (sectors) ===
+Model: SAMSUNG KLUEG8UHDB-C2D1 (scsi)
+Disk /dev/block/sde: 655360s
+Sector size (logical/physical): 4096B/4096B
+Partition Table: gpt
+Disk Flags: 
+
+Number  Start    End      Size     File system  Name            Flags
+ 1      6s       133s     128s                  aop_a
+ 2      134s     1157s    1024s                 tz_a
+ 3      1158s    3205s    2048s                 hyp_a
+ 4      3206s    134277s  131072s  fat16        modem_a         msftdata
+ 5      134278s  134533s  256s                  bluetooth_a
+ 6      134534s  135557s  1024s                 mdtpsecapp_a
+ 7      135558s  143749s  8192s                 mdtp_a
+ 8      143750s  145797s  2048s                 abl_a
+ 9      145798s  162181s  16384s   ext4         dsp_a
+10      162182s  162309s  128s                  keymaster_a
+11      162310s  186885s  24576s                boot_a
+12      186886s  187013s  128s                  cmnlib_a
+13      187014s  187141s  128s                  cmnlib64_a
+14      187142s  187173s  32s                   devcfg_a
+15      187174s  187193s  20s                   qupfw_a
+16      187194s  187209s  16s                   vbmeta_a
+17      187210s  193353s  6144s                 dtbo_a
+18      193354s  193865s  512s                  uefisecapp_a
+19      193866s  193873s  8s                    multiimgoem_a
+20      193874s  193881s  8s                    multiimgqti_a
+21      193882s  202073s  8192s                 vm-linux_a
+22      202074s  202105s  32s                   featenabler_a
+23      202106s  202617s  512s                  imagefv_a       hidden
+24      202618s  206713s  4096s                 logo_a
+25      206714s  206841s  128s                  aop_b
+26      206842s  207865s  1024s                 tz_b
+27      207866s  209913s  2048s                 hyp_b
+28      209914s  340985s  131072s  fat16        modem_b
+29      340986s  341241s  256s                  bluetooth_b
+30      341242s  342265s  1024s                 mdtpsecapp_b
+31      342266s  350457s  8192s                 mdtp_b
+32      350458s  352505s  2048s                 abl_b
+33      352506s  368889s  16384s   ext4         dsp_b
+34      368890s  369017s  128s                  keymaster_b
+35      369018s  393593s  24576s                boot_b
+36      393594s  393721s  128s                  cmnlib_b
+37      393722s  393849s  128s                  cmnlib64_b
+38      393850s  393881s  32s                   devcfg_b
+39      393882s  393901s  20s                   qupfw_b
+40      393902s  393917s  16s                   vbmeta_b
+41      393918s  400061s  6144s                 dtbo_b
+42      400062s  400573s  512s                  uefisecapp_b
+43      400574s  400581s  8s                    multiimgoem_b
+44      400582s  400589s  8s                    multiimgqti_b
+45      400590s  408781s  8192s                 vm-linux_b
+46      408782s  408813s  32s                   featenabler_b
+47      408814s  409325s  512s                  imagefv_b       hidden
+48      409326s  413421s  4096s                 logo_b
+49      413422s  413422s  1s                    devinfo
+50      413423s  413678s  256s                  dip
+51      413679s  413742s  64s                   apdp
+52      413743s  413806s  64s                   msadp
+53      413807s  421998s  8192s                 spunvm
+54      421999s  421999s  1s                    limits
+55      422000s  422000s  1s                    limits-cdsp
+56      422001s  424048s  2048s                 logfs
+57      424049s  440432s  16384s                logdump
+58      440433s  440464s  32s                   storsec_a
+59      440465s  440592s  128s                  uefivarstore
+60      440593s  440599s  7s                    secdata
+61      440600s  440631s  32s                   vm-keystore
+62      440632s  441655s  1024s                 vm-data
+63      441656s  442167s  512s                  mdm1oemnvbktmp
+64      442168s  458551s  16384s                aging_kernel
+65      458552s  466743s  8192s                 aging_mod
+66      466744s  543543s  76800s                op1
+67      543544s  547591s  4048s                 abl_log
+68      547592s  555687s  8096s                 kernel_log
+69      555688s  559735s  4048s                 android_log
+70      559736s  563783s  4048s                 qsee_log
+71      563784s  567831s  4048s                 hyp_log
+72      567832s  569855s  2024s                 reserve1
+73      569856s  573903s  4048s                 reserve2
+74      573904s  577951s  4048s                 reserve3
+75      577952s  581999s  4048s                 reserve4
+76      582000s  582031s  32s                   storsec_b
+
+
