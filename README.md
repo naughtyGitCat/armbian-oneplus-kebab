@@ -24,6 +24,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 
 - [Flashing (keep the stock GPT)](docs/flashing.md)
 - [QCA6390 DTB](docs/dtb-wifi.md)
+- [Changing Wi-Fi](docs/wifi.md)
 - [Display / why dispcc is off](docs/display.md)
 - [Do not leak host config](SECURITY.md)
 
@@ -51,7 +52,8 @@ scripts/install-overlay.sh root@172.16.42.1
 
 Then copy `overlay/etc/netplan/20-wifi.example.yaml` to
 `/etc/netplan/20-wifi.yaml` **on the device** and fill in your own SSID.
-That live file must never land in git.
+That live file must never land in git. To switch networks later, see
+[docs/wifi.md](docs/wifi.md).
 
 ## CI
 

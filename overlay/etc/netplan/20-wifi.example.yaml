@@ -1,5 +1,6 @@
 # Copy to /etc/netplan/20-wifi.yaml on the phone and replace the placeholders.
-# Do not commit the copied file.
+# Keep only the AP you want. Then: chmod 600 /etc/netplan/20-wifi.yaml && netplan apply
+# Do not commit the copied file. See docs/wifi.md.
 network:
   version: 2
   renderer: networkd
