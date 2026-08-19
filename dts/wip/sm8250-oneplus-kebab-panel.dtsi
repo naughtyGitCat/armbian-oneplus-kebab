@@ -1,0 +1,99 @@
+/*
+ * Sketch only. Not included from sm8250-oneplus-kebab.dts.
+ * Enabling this without a panel driver + dispcc + DSI0 + PHY together hangs
+ * the SoC. See docs/display.md.
+ *
+ * Mapped from Lineage kebab
+ *   dsi-panel-oplus20828-samsung-amb655x-1080-2400-120fps.dtsi
+ *   kona-sde-display.dtsi
+ * and the OP8 mainline wiring in Xo666 sm8250-oneplus-instantnoodle.dts
+ * (same reset/TE/AVDD GPIOs; kebab vout is GPIO 24, not GPIO 8).
+ */
+
+/ {
+	panel_avdd_5p5: regulator-panel-avdd {
+		compatible = "regulator-fixed";
+		regulator-name = "panel_avdd_5p5";
+		regulator-min-microvolt = <5500000>;
+		regulator-max-microvolt = <5500000>;
+		regulator-enable-ramp-delay = <233>;
+		gpio = <&tlmm 61 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+		pinctrl-names = "default";
+		pinctrl-0 = <&panel_avdd_pins>;
+	};
+};
+
+&tlmm {
+	panel_reset_pins: panel-reset-state {
+		pins = "gpio75";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	panel_vsync_pins: panel-vsync-state {
+		pins = "gpio66";
+		function = "mdp_vsync";
+		drive-strength = <16>;
+		bias-pull-down;
+	};
+
+	/* kebab: panel VOUT load-switch. OP8 uses gpio8 for the same job. */
+	panel_vout_pins: panel-vout-state {
+		pins = "gpio24";
+		function = "gpio";
+		drive-strength = <8>;
+		output-high;
+	};
+
+	panel_avdd_pins: panel-avdd-state {
+		pins = "gpio61";
+		function = "gpio";
+		drive-strength = <8>;
+		output-high;
+	};
+};
+
+/*
+ * Leave every status = "disabled". The live DTB must not grow these
+ * okay nodes until the panel driver is in the kernel.
+ */
+&mdss_dsi0 {
+	vdda-supply = <&vreg_l9a_1p2>;
+	status = "disabled";
+
+	display_panel: panel@0 {
+		compatible = "samsung,amb655x";
+		reg = <0>;
+
+		vddio-supply = <&vreg_l14a_1p8>;
+		vdd-supply = <&vreg_l11c_3p3>;
+		avdd-supply = <&panel_avdd_5p5>;
+		/* vout / L2C (vreg_l2c_1p2 @ 1.20–1.28 V) held via panel_vout_pins */
+
+		reset-gpios = <&tlmm 75 GPIO_ACTIVE_LOW>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&panel_reset_pins &panel_vsync_pins &panel_vout_pins>;
+
+		status = "disabled";
+
+		port {
+			panel_in_0: endpoint {
+				remote-endpoint = <&mdss_dsi0_out>;
+			};
+		};
+	};
+};
+
+&mdss_dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in_0>;
+};
+
+&mdss_dsi0_phy {
+	vdds-supply = <&vreg_l5a_0p88>;
+	status = "disabled";
+};

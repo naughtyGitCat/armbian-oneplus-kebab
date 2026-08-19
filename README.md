@@ -16,7 +16,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 | USB Type-C gadget (NCM, `172.16.42.1`) | works (`usb_1` / `a600000`, HS only) |
 | QCA6390 Wi-Fi (`ath11k_pci`) | works **with the DTB in this repo** |
 | Power key / 5 min idle blank | `kebab-powerd` on `simpledrm` |
-| `msm-mdss` / panel / GPU | **not** up. Do not enable `dispcc` alone — it hangs the boot. |
+| `msm-mdss` / panel / GPU | **not** up. Panel is Samsung AMB655X (oplus20828). Do not enable `dispcc` alone. |
 | Type-C host / OTG | not done (`usb_2` is the internal host) |
 | Charge limit (80%) | **not** possible. Only the bq27541 gauge is bound; SMB5 is disabled. |
 | Android restore | GPT kept; you need your own stock images |
@@ -36,6 +36,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 dts/upstream/     Armbian 0011 kebab DTS, verbatim
 dts/sm8250-…dts   same file with the Wi-Fi PMU delta
 dts/patches/      git-style patch, `patch -p1` on a kernel tree
+dts/wip/          unused panel DT sketch (not compiled, dispcc still off)
 dtb/              prebuilt DTB (dispcc still disabled)
 overlay/          systemd / modules / netplan *example*
 scripts/          gadget, display, powerd, CI helpers
