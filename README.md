@@ -18,6 +18,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 | Power key / 5 min idle blank | `kebab-powerd` on `simpledrm` |
 | `msm-mdss` / panel / GPU | **not** up. Do not enable `dispcc` alone — it hangs the boot. |
 | Type-C host / OTG | not done (`usb_2` is the internal host) |
+| Charge limit (80%) | **not** possible. Only the bq27541 gauge is bound; SMB5 is disabled. |
 | Android restore | GPT kept; you need your own stock images |
 
 ## Docs
@@ -26,6 +27,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 - [QCA6390 DTB](docs/dtb-wifi.md)
 - [Changing Wi-Fi](docs/wifi.md)
 - [Display / why dispcc is off](docs/display.md)
+- [Battery / why there is no 80% cap](docs/battery.md)
 - [Do not leak host config](SECURITY.md)
 
 ## Tree
