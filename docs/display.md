@@ -1,20 +1,22 @@
-# Display (simpledrm only)
+# Display
 
-What you see after boot is the **bootloader framebuffer** via `simpledrm`
-(`9c000000`, 1080×2376, 32 bpp). There is no `/sys/class/backlight`. Blanking
-is a userspace write to `/sys/class/graphics/fb0/blank` plus a black fill of
-`/dev/fb0` (AMOLED) — that is what `scripts/kebab-display` does.
+`6.18.43-kebab-dsi` plus the display DTB lights the Samsung AMB655X:
 
-`msm-mdss ae00000.display-subsystem` probes with **-110 ETIMEDOUT**. MDSS wants:
+| | |
+|---|---|
+| driver | `panel-samsung-amb655x` bound at `ae94000.dsi.0` |
+| KMS | `msm` 1.13 on `ae01000.display-controller` (`card1-DSI-1`) |
+| FB | `msmdrmfb` 1080×2400 32 bpp (ABL's simpledrm was 1080×2376) |
+| backlight | `/sys/class/backlight/ae94000.dsi.0` DCS raw 0–2047 |
+| GPU | still **disabled** (`no GPU device was found`) |
 
-```
-power-domains = <&dispcc MDSS_GDSC>;
-```
+Official Armbian `current` (and the DTB in `dtb/`) still has `&dispcc`
+disabled. That probe path is `-110 ETIMEDOUT` on `msm-mdss` and you only get
+the bootloader FB via `simpledrm`. Blanking there is `fb0/blank` plus a black
+fill — `scripts/kebab-display` still does that, and it also works on `msmdrmfb`.
 
-and the DSI clocks from `dispcc` (`clock-controller@af00000`). Upstream kebab
-DTS enables `&mdss` but leaves **`&dispcc` disabled**. DSI0/1, the 7 nm PHYs,
-and the panel node are also off. This 6.18 Armbian kernel has **no**
-`panel-samsung-amb655x` driver.
+Boot-time `DSI PLL(0) lock failed` is a warning during PHY probe; DSI still
+binds afterwards. Do not treat that as a hang.
 
 ## Do not enable only dispcc
 
@@ -81,7 +83,7 @@ ABL's FB is 1080×2376 (24 px shorter). That is a bootloader crop, not a second 
 | `vddio-supply` | `pm8150_l14` / `L14A` | 1.80 V (max 1.88) | `vreg_l14a_1p8` |
 | `vout-supply` | `L2C` / `pm8150a_l2` | 1.20–1.304 V, panel asks 1.28 | `vreg_l2c_1p2` (fixed 1.20 V today) |
 | `vdd-supply` | `pm8150a_l11` / `L11C` | 3.104–3.304 V | `vreg_l11c_3p3` (3.296 V, always-on) |
-| `avdd-supply` | `display_panel_avdd` | 5.5 V via GPIO 61 | not in the kebab DTS yet |
+| `avdd-supply` | `display_panel_avdd` | 5.5 V via GPIO 61 | `panel_avdd_5p5` (GPIO 61) in the display DTS |
 
 `lab` / `ibb` tables exist in the same file and are **unused** on this panel.
 
@@ -102,7 +104,7 @@ for GPIO 8) and optionally raise `vreg_l2c_1p2` to 1.28 V.
 
 Reset is `GPIO_ACTIVE_LOW` in that tree. Downstream writes raw 1/0/1 on TLMM 75.
 
-## Kernel + two DTBs (not flashed)
+## Kernel + two DTBs
 
 A 6.18.43 tree with every Armbian `sm8250-6.18` patch plus
 [`kernel/panel-samsung-amb655x.c`](../kernel/panel-samsung-amb655x.c)
@@ -126,37 +128,11 @@ Wi-Fi DTS. `--enable-display` also writes
 `boot_a`. Pack the display image with
 [`scripts/pack-abl-boot.sh`](../scripts/pack-abl-boot.sh) instead.
 
-### Stage A — new kernel, old display (do this first)
+Stage A (new kernel + safe DTB) then Stage B (same kernel + display DTB)
+both booted. Wi-Fi and the Type-C gadget survived Stage B. Roll back with
+`pack-abl-boot.sh safe --flash` or the last known-good `boot_a` image.
+Power + Vol-Up 15–20 s is the PMIC hard reset if the SoC is wedged.
 
-Same `Image` + **safe** DTB (`dispcc` still off). Confirms USB gadget +
-Wi-Fi + SSH before anything touches MDSS.
-
-On the phone, files already staged as `6.18.43-kebab-dsi`. To write
-`boot_a` (only when you are ready):
-
-```sh
-scripts/pack-abl-boot.sh safe --flash
-reboot
-```
-
-If that boot dies: Orange Fox on `recovery_a`, then flash the last known-good
-`boot_a` image (the Wi-Fi DTB Armbian image). Power + Vol-Up 15–20 s is the
-PMIC hard reset if the SoC is wedged.
-
-### Stage B — same kernel, display DTB
-
-Only after Stage A SSH works:
-
-```sh
-scripts/pack-abl-boot.sh display --flash
-reboot
-```
-
-A hang here kills Wi-Fi too; the Type-C gadget is not a safety net. Do not
-enable only `dispcc` on the running 26.8.1 DTB as a shortcut.
-
-The disabled fragment sketch is still
+The shipped `dtb/sm8250-oneplus-kebab.dtb` stays `dispcc` disabled so a
+stock Armbian image still boots. The panel fragment sketch is
 [`dts/wip/sm8250-oneplus-kebab-panel.dtsi`](../dts/wip/sm8250-oneplus-kebab-panel.dtsi).
-The shipped `dtb/sm8250-oneplus-kebab.dtb` stays `dispcc` disabled.
-
-Until Stage B actually lights the panel, the console stays on simpledrm.

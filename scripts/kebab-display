@@ -1,6 +1,6 @@
 #!/bin/sh
-# Blank / unblank the kebab simpledrm framebuffer console.
-# msm-mdss is not bound, so this is software blank + black fill.
+# Blank / unblank the kebab framebuffer console (simpledrm or msmdrmfb).
+# Prefer fb0 blank; also poke a backlight if msm created one.
 set -eu
 
 STATE=/run/kebab-display.state
@@ -22,6 +22,11 @@ paint_black() {
 
 display_on() {
 	echo 0 > "$FB" 2>/dev/null || true
+	for bl in /sys/class/backlight/*/brightness; do
+		[ -w "$bl" ] || continue
+		max=$(cat "$(dirname "$bl")/max_brightness" 2>/dev/null) || continue
+		echo "$max" > "$bl" 2>/dev/null || true
+	done
 	setterm --blank=poke --term linux < /dev/tty1 2>/dev/null || true
 	echo on > "$STATE"
 }

@@ -18,7 +18,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 | Power key / 5 min idle blank | `kebab-powerd` on `simpledrm` |
 | Time / RTC | NTP + `fake-hwclock`. PMIC RTC is read-only (`SET_TIME` → `ENODEV`). |
 | SSH | keys only (overlay drop-in). USB gadget is the recovery path. |
-| `msm-mdss` / panel / GPU | **not** up. `6.18.43-kebab-dsi` + AMB655X driver built, not flashed. Do not enable `dispcc` alone. |
+| `msm-mdss` / panel / GPU | panel up on `6.18.43-kebab-dsi` (AMB655X 1080×2400, `msm` 1.13). GPU still off. Do not enable `dispcc` alone. |
 | Type-C host / OTG | not done (`usb_2` is the internal host) |
 | Charge limit (80%) | **not** possible. Only the bq27541 gauge is bound; SMB5 is disabled. |
 | Android restore | GPT kept; you need your own stock images |
