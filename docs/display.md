@@ -102,21 +102,61 @@ for GPIO 8) and optionally raise `vreg_l2c_1p2` to 1.28 V.
 
 Reset is `GPIO_ACTIVE_LOW` in that tree. Downstream writes raw 1/0/1 on TLMM 75.
 
-## Proposed mainline fragment (not applied)
+## Kernel + two DTBs (not flashed)
 
-A disabled sketch lives in
+A 6.18.43 tree with every Armbian `sm8250-6.18` patch plus
+[`kernel/panel-samsung-amb655x.c`](../kernel/panel-samsung-amb655x.c)
+(`CONFIG_DRM_PANEL_SAMSUNG_AMB655X=y`) builds as `6.18.43-kebab-dsi`.
+6.18 has no `mipi_dsi_dcs_write_long_multi` — the vendored driver uses
+`mipi_dsi_dcs_write_seq_multi`. BTF is off for this bring-up kernel.
+
+`scripts/apply-dsi-to-tree.sh /path/to/linux` drops the driver and the
+Wi-Fi DTS. `--enable-display` also writes
+[`dts/wip/sm8250-oneplus-kebab-dsi.dts`](../dts/wip/sm8250-oneplus-kebab-dsi.dts):
+
+| node | safe `kebab.dtb` | `kebab-dsi.dtb` |
+|---|---|---|
+| `&dispcc` | disabled | okay |
+| `&mdss` | okay | okay |
+| `&mdss_dsi0` + panel `samsung,amb655x` | absent | okay |
+| `&mdss_dsi0_phy` | disabled | okay |
+| `&mdss_dsi1` / PHY / DP / `&gpu` | disabled | disabled |
+
+`zz-update-abl-kernel` always appends `sm8250-oneplus-kebab.dtb` and `dd`s
+`boot_a`. Pack the display image with
+[`scripts/pack-abl-boot.sh`](../scripts/pack-abl-boot.sh) instead.
+
+### Stage A — new kernel, old display (do this first)
+
+Same `Image` + **safe** DTB (`dispcc` still off). Confirms USB gadget +
+Wi-Fi + SSH before anything touches MDSS.
+
+On the phone, files already staged as `6.18.43-kebab-dsi`. To write
+`boot_a` (only when you are ready):
+
+```sh
+scripts/pack-abl-boot.sh safe --flash
+reboot
+```
+
+If that boot dies: Orange Fox on `recovery_a`, then flash the last known-good
+`boot_a` image (the Wi-Fi DTB Armbian image). Power + Vol-Up 15–20 s is the
+PMIC hard reset if the SoC is wedged.
+
+### Stage B — same kernel, display DTB
+
+Only after Stage A SSH works:
+
+```sh
+scripts/pack-abl-boot.sh display --flash
+reboot
+```
+
+A hang here kills Wi-Fi too; the Type-C gadget is not a safety net. Do not
+enable only `dispcc` on the running 26.8.1 DTB as a shortcut.
+
+The disabled fragment sketch is still
 [`dts/wip/sm8250-oneplus-kebab-panel.dtsi`](../dts/wip/sm8250-oneplus-kebab-panel.dtsi).
-It is **not** `#include`d from `dts/sm8250-oneplus-kebab.dts`. The shipped DTB
-still has `dispcc` disabled and no panel node.
+The shipped `dtb/sm8250-oneplus-kebab.dtb` stays `dispcc` disabled.
 
-Turning that fragment on also needs:
-
-1. The `.c` built into this 6.18 (or a newer) kernel — a DTB-only change will
-   still -110 / hang.
-2. `&dispcc`, `&mdss_dsi0`, `&mdss_dsi0_phy` flipped together, not one at a time.
-3. A plan for dispcc's unused parents (`dsi1` PHY PLLs and the Type-C QMP DP
-   clocks). Those missing parents are a leading suspect for the last hang.
-4. Orange Fox + a known-good `boot_a` image before the first try. A hang kills
-   Wi-Fi too; gadget SSH is not a safety net.
-
-Until then the console stays on simpledrm.
+Until Stage B actually lights the panel, the console stays on simpledrm.

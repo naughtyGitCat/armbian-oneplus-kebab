@@ -18,7 +18,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 | Power key / 5 min idle blank | `kebab-powerd` on `simpledrm` |
 | Time / RTC | NTP + `fake-hwclock`. PMIC RTC is read-only (`SET_TIME` → `ENODEV`). |
 | SSH | keys only (overlay drop-in). USB gadget is the recovery path. |
-| `msm-mdss` / panel / GPU | **not** up. Panel is Samsung AMB655X (oplus20828). Do not enable `dispcc` alone. |
+| `msm-mdss` / panel / GPU | **not** up. `6.18.43-kebab-dsi` + AMB655X driver built, not flashed. Do not enable `dispcc` alone. |
 | Type-C host / OTG | not done (`usb_2` is the internal host) |
 | Charge limit (80%) | **not** possible. Only the bq27541 gauge is bound; SMB5 is disabled. |
 | Android restore | GPT kept; you need your own stock images |
@@ -39,10 +39,11 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 dts/upstream/     Armbian 0011 kebab DTS, verbatim
 dts/sm8250-…dts   same file with the Wi-Fi PMU delta
 dts/patches/      git-style patch, `patch -p1` on a kernel tree
-dts/wip/          unused panel DT sketch (not compiled, dispcc still off)
+dts/wip/          display-enable DTS + panel sketch (not the shipped DTB)
 dtb/              prebuilt DTB (dispcc still disabled)
+kernel/           out-of-tree Samsung AMB655X panel driver
 overlay/          systemd / modules / netplan *example*
-scripts/          gadget, display, powerd, CI helpers
+scripts/          gadget, display, powerd, apply-dsi, pack-abl
 reference/        stock 256 GB GPT text dumps (no serial)
 ```
 
