@@ -16,6 +16,8 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 | USB Type-C gadget (NCM, `172.16.42.1`) | works (`usb_1` / `a600000`, HS only) |
 | QCA6390 Wi-Fi (`ath11k_pci`) | works **with the DTB in this repo** |
 | Power key / 5 min idle blank | `kebab-powerd` on `simpledrm` |
+| Time / RTC | NTP + `fake-hwclock`. PMIC RTC is read-only (`SET_TIME` → `ENODEV`). |
+| SSH | keys only (overlay drop-in). USB gadget is the recovery path. |
 | `msm-mdss` / panel / GPU | **not** up. Panel is Samsung AMB655X (oplus20828). Do not enable `dispcc` alone. |
 | Type-C host / OTG | not done (`usb_2` is the internal host) |
 | Charge limit (80%) | **not** possible. Only the bq27541 gauge is bound; SMB5 is disabled. |
@@ -28,6 +30,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 - [Changing Wi-Fi](docs/wifi.md)
 - [Display / why dispcc is off](docs/display.md)
 - [Battery / why there is no 80% cap](docs/battery.md)
+- [Headless (timezone, RTC, SSH)](docs/headless.md)
 - [Do not leak host config](SECURITY.md)
 
 ## Tree

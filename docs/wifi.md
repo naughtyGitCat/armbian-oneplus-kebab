@@ -45,7 +45,10 @@ ip -4 -br addr show wlan0
 ```
 
 `wlan0` is pinned by [`overlay/etc/systemd/network/10-wlan.link`](../overlay/etc/systemd/network/10-wlan.link)
-(`Driver=ath11k_pci`). Do not match on MAC — ath11k can change it.
+(`Driver=ath11k_pci`). Do not put a MAC in the `[Match]` block — ath11k can
+change it. To *stop* it changing (DHCP reservation), add `MACAddress=`
+under `[Link]` on the phone only; keep that line out of git. Re-running
+`scripts/install-overlay.sh` overwrites the file and drops the pin.
 
 Hidden SSIDs need `hidden: true` under that `access-points` entry.
 
