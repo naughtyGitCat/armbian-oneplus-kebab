@@ -7,6 +7,9 @@
 // (kebab) Samsung AMB655X / oplus20828. Compatible is samsung,amb655x —
 // not the OP8's samsung,amb655uv01. 6.18 deltas: regulator include;
 // mipi_dsi_dcs_write_long_multi is 6.19+, so write_seq_multi.
+// PPS: Lineage kebab panel sends DCS 0x9E + 128-byte PPS, then 0x9D=1.
+// The generator dumped a raw PPS write (first byte 0x11 = EXIT_SLEEP) and
+// packed it before RC parameters existed — black screen + vertical lines.
 
 #include <linux/backlight.h>
 #include <linux/delay.h>
@@ -22,6 +25,13 @@
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_modes.h>
 #include <drm/drm_panel.h>
+
+/*
+ * Temporary bring-up switch. 1 = skip PPS/0x9D and do not attach
+ * dsi->dsc, so DPU/DSI send RGB888. Used to tell DSC-path snow from
+ * a more basic scanout/lane problem. Set back to 0 after the test.
+ */
+#define AMB655X_UNCOMPRESSED_DIAG 0
 
 struct samsung_amb655x {
 	struct drm_panel panel;
@@ -47,21 +57,86 @@ static void samsung_amb655x_reset(struct samsung_amb655x *amb655x)
 	usleep_range(10000, 11000);
 }
 
+/*
+ * Same fill as msm dsi_populate_dsc_params. Must run before the first PPS
+ * write: prepare_prev_first sends on() before the host has computed RC.
+ */
+static int samsung_amb655x_fill_dsc(struct drm_dsc_config *dsc)
+{
+	int ret;
+
+	dsc->pic_width = 1080;
+	dsc->pic_height = 2400;
+	dsc->simple_422 = 0;
+	dsc->convert_rgb = 1;
+	dsc->vbr_enable = 0;
+
+	drm_dsc_set_const_params(dsc);
+	drm_dsc_set_rc_buf_thresh(dsc);
+
+	ret = drm_dsc_setup_rc_params(dsc, DRM_DSC_1_1_PRE_SCR);
+	if (ret)
+		return ret;
+
+	dsc->initial_scale_value = drm_dsc_initial_scale_value(dsc);
+	dsc->line_buf_depth = dsc->bits_per_component + 1;
+
+	return drm_dsc_compute_rc_parameters(dsc);
+}
+
 static int samsung_amb655x_on(struct samsung_amb655x *amb655x)
 {
-	struct drm_dsc_picture_parameter_set pps;
+	struct {
+		u8 cmd;
+		struct drm_dsc_picture_parameter_set pps;
+	} __packed pps_cmd;
 	struct mipi_dsi_device *dsi = amb655x->dsi;
 	struct mipi_dsi_multi_context ctx = { .dsi = dsi };
+	int ret;
 
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
-	drm_dsc_pps_payload_pack(&pps, &amb655x->dsc);
+	if (AMB655X_UNCOMPRESSED_DIAG) {
+		dev_err(&dsi->dev,
+			"AMB655X uncompressed diagnostic: skip PPS/DSC\n");
+		/* Same 0xF0 unlock as the DSC path; 0x9D without it is ignored. */
+		mipi_dsi_dcs_write_seq_multi(&ctx, 0xf0, 0x5a, 0x5a);
+		mipi_dsi_dcs_write_seq_multi(&ctx, 0x9d, 0x00);
+		mipi_dsi_dcs_write_seq_multi(&ctx, 0xf0, 0xa5, 0xa5);
+		goto skip_dsc;
+	}
+
+	ret = samsung_amb655x_fill_dsc(&amb655x->dsc);
+	if (ret)
+		return ret;
+
+	/* Downstream: DCS long write 0x9E + 128-byte PPS, then 0x9D = 1. */
+	pps_cmd.cmd = 0x9e;
+	drm_dsc_pps_payload_pack(&pps_cmd.pps, &amb655x->dsc);
+	{
+		const u8 *pps = (const u8 *)&pps_cmd.pps;
+		int i;
+
+		dev_info(&dsi->dev,
+			 "DSC chunk=%u slice=%ux%u count=%u bpp=%u dec=%u slice_bpg=%u scale_inc=%u\n",
+			 amb655x->dsc.slice_chunk_size,
+			 amb655x->dsc.slice_width,
+			 amb655x->dsc.slice_height,
+			 amb655x->dsc.slice_count,
+			 amb655x->dsc.bits_per_pixel,
+			 amb655x->dsc.initial_dec_delay,
+			 amb655x->dsc.slice_bpg_offset,
+			 amb655x->dsc.scale_increment_interval);
+		for (i = 0; i < 128; i += 16)
+			dev_info(&dsi->dev, "DSC PPS %02x: %16ph\n", i, pps + i);
+	}
 
 	mipi_dsi_dcs_write_seq_multi(&ctx, 0xf0, 0x5a, 0x5a);
-	mipi_dsi_dcs_write_buffer_multi(&ctx, &pps, sizeof(pps));
+	mipi_dsi_dcs_write_buffer_multi(&ctx, &pps_cmd, sizeof(pps_cmd));
 	mipi_dsi_dcs_write_seq_multi(&ctx, 0x9d, 0x01);
 	mipi_dsi_dcs_write_seq_multi(&ctx, 0xf0, 0xa5, 0xa5);
 
+skip_dsc:
 	mipi_dsi_dcs_exit_sleep_mode_multi(&ctx);
 	mipi_dsi_msleep(&ctx, 11);
 
@@ -102,7 +177,11 @@ static int samsung_amb655x_on(struct samsung_amb655x *amb655x)
 	mipi_dsi_dcs_write_seq_multi(&ctx, 0xd5, 0x05);
 	mipi_dsi_dcs_write_seq_multi(&ctx, 0xf0, 0xa5, 0xa5);
 
-	/* FFC Function */
+	/*
+	 * FFC Function. Restored for #51: analog is CCF 1.1 G again and
+	 * DPU mixer/CTL now match ABL. Skip was only valid for 825 M HS.
+	 */
+	dev_info(&dsi->dev, "AMB655X 1100 Mbps FFC\n");
 	mipi_dsi_dcs_write_seq_multi(&ctx, 0xfc, 0x5a, 0x5a);
 	mipi_dsi_dcs_write_seq_multi(&ctx, 0xb0, 0x01);
 	mipi_dsi_dcs_write_seq_multi(&ctx, 0xe4, 0xa6, 0x75, 0xa3);
@@ -126,12 +205,15 @@ static int samsung_amb655x_on(struct samsung_amb655x *amb655x)
 
 	mipi_dsi_dcs_write_seq_multi(&ctx, MIPI_DCS_WRITE_CONTROL_DISPLAY, 0x20);
 
-	/* refresh rate Transition */
+	/* refresh rate Transition.
+	 * #53: vendor default is 120 Hz (0x60=0x10). 60 Hz (0x00)
+	 * with reset snowed on the fully-matched DPU; skip-reset plus
+	 * 0x10 was black because the PHY was re-inited. Isolated
+	 * 0x10 with reset + 1.1 G FFC + Lineage timings.
+	 */
 	mipi_dsi_dcs_write_seq_multi(&ctx, 0xf0, 0x5a, 0x5a);
-	/* 60 Hz */
-	mipi_dsi_dcs_write_seq_multi(&ctx, 0x60, 0x00);
-	/* 120 Hz */
-	/* mipi_dsi_dcs_write_seq_multi(&ctx, 0x60, 0x10); */
+	dev_info(&dsi->dev, "AMB655X 120 Hz 0x60=0x10\n");
+	mipi_dsi_dcs_write_seq_multi(&ctx, 0x60, 0x10);
 
 	mipi_dsi_dcs_write_seq_multi(&ctx, 0xf0, 0xa5, 0xa5);
 
@@ -180,17 +262,14 @@ static int samsung_amb655x_prepare(struct drm_panel *panel)
 	int ret;
 
 	/*
-	 * During the first call to prepare, the regulators are already enabled
-	 * since they're boot-on. Avoid enabling them twice so we keep the
-	 * refcounts balanced.
+	 * Always take a ref. Probe also enables boot-on rails; skipping here
+	 * left vddio/avdd at refcount 0 after the first unprepare (fb blank),
+	 * and TE/wait_for_idle then timed out.
 	 */
-	if (!regulator_is_enabled(ctx->supplies[0].consumer)) {
-		ret = regulator_bulk_enable(ARRAY_SIZE(ctx->supplies),
-					    ctx->supplies);
-		if (ret) {
-			dev_err(dev, "Failed to enable regulators: %d\n", ret);
-			return ret;
-		}
+	ret = regulator_bulk_enable(ARRAY_SIZE(ctx->supplies), ctx->supplies);
+	if (ret) {
+		dev_err(dev, "Failed to enable regulators: %d\n", ret);
+		return ret;
 	}
 
 	samsung_amb655x_reset(ctx);
@@ -230,11 +309,17 @@ static int samsung_amb655x_unprepare(struct drm_panel *panel)
 }
 
 static const struct drm_display_mode samsung_amb655x_60_mode = {
-	.clock = (1080 + 52 + 24 + 24) * (2400 + 4 + 4 + 8) * 60 / 1000,
+	/*
+	 * Downstream qcom,mdss-dsi-panel-clockrate is 1100 MHz. Command
+	 * mode porches never go on the wire; they only scale DSI HS so
+	 * the panel FFC (0xE4/0xE9) matches. 1180 htotal was 1.026 Gbps
+	 * and even DSI TPG (no DPU) snowed.
+	 */
+	.clock = (1080 + 136 + 24 + 24) * (2400 + 4 + 4 + 8) * 60 / 1000,
 	.hdisplay = 1080,
-	.hsync_start = 1080 + 52,
-	.hsync_end = 1080 + 52 + 24,
-	.htotal = 1080 + 52 + 24 + 24,
+	.hsync_start = 1080 + 136,
+	.hsync_end = 1080 + 136 + 24,
+	.htotal = 1080 + 136 + 24 + 24,
 	.vdisplay = 2400,
 	.vsync_start = 2400 + 4,
 	.vsync_end = 2400 + 4 + 4,
@@ -345,14 +430,20 @@ static int samsung_amb655x_probe(struct mipi_dsi_device *dsi)
 
 	drm_panel_add(&ctx->panel);
 
-	/* This panel only supports DSC; unconditionally enable it */
-	dsi->dsc = &ctx->dsc;
+	if (AMB655X_UNCOMPRESSED_DIAG)
+		dsi->dsc = NULL;
+	else
+		dsi->dsc = &ctx->dsc;
 
 	ctx->dsc.dsc_version_major = 1;
 	ctx->dsc.dsc_version_minor = 1;
 
 	/* TODO: Pass slice_per_pkt = 2 */
 	ctx->dsc.slice_height = 30;
+	/* Vendor 2 x 540. #22 1 x 1080 changed snow texture (PPS is
+	 * live) but the panel decoder is 2-slice. #23 restores this
+	 * with 2:2:1 and full pic_width per engine (CAF).
+	 */
 	ctx->dsc.slice_width = 540;
 	/*
 	 * TODO: hdisplay should be read from the selected mode once
@@ -363,6 +454,10 @@ static int samsung_amb655x_probe(struct mipi_dsi_device *dsi)
 	ctx->dsc.bits_per_component = 8;
 	ctx->dsc.bits_per_pixel = 8 << 4; /* 4 fractional bits */
 	ctx->dsc.block_pred_enable = true;
+
+	ret = samsung_amb655x_fill_dsc(&ctx->dsc);
+	if (ret)
+		return ret;
 
 	ret = mipi_dsi_attach(dsi);
 	if (ret < 0) {

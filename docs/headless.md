@@ -1,8 +1,9 @@
 # Headless daily use
 
 The image is usable as a USB + Wi-Fi box without the panel. This page is the
-userspace side. Display stays on `simpledrm`; do not enable `dispcc` alone
-(see [display.md](display.md)).
+userspace side. Official `kebab.dtb` stays on `simpledrm`; do not enable
+`dispcc` alone. Linux fbcon is the display-DTB path — see
+[display.md](display.md).
 
 ## Timezone
 

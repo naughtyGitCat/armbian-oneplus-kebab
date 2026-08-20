@@ -34,4 +34,6 @@ You cannot compile the DTS in this repo by itself — it `#include`s `sm8250.dts
 - drop `dts/sm8250-oneplus-kebab.dts` into an sm8250 tree and `make dtbs`, or
 - take the Armbian DTB and `fdtput` the same nodes (how the first working image was made).
 
-`dispcc` (`clock-controller@af00000`) stays **disabled** in this DTB on purpose. See [display.md](display.md).
+`dispcc` (`clock-controller@af00000`) stays **disabled** in this DTB on
+purpose. Linux fbcon is the separate display DTB (`kebab-dsi`). See
+[display.md](display.md).

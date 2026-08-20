@@ -722,6 +722,9 @@
 	&mdss_dsi0_out {
 		data-lanes = <0 1 2 3>;
 		remote-endpoint = <&panel_in_0>;
+		/* #10 vsync_p and #11 vsync_s both left wait_for_idle -110.
+		 * Watchdog TE isolates gpio66 from scanout/DSC/PHY. */
+		qcom,te-source = "timer0";
 	};
 
 	&mdss_dsi0_phy {

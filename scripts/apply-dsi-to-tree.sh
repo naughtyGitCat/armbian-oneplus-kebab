@@ -22,7 +22,42 @@ done
 cp "$root/kernel/panel-samsung-amb655x.c" \
 	"$tree/drivers/gpu/drm/panel/panel-samsung-amb655x.c"
 
-python3 - "$tree" <<'PY'
+python3 "$root/kernel/patches/patch-dsi-slice-per-pkt.py" "$tree"
+python3 "$root/kernel/patches/patch-dpu-single-dsc.py" "$tree"
+python3 "$root/kernel/patches/patch-dsi-dsc-log.py" "$tree"
+python3 "$root/kernel/patches/patch-dsi-cmd-hs-clock.py" "$tree"
+python3 "$root/kernel/patches/patch-dsi-mdp-dstfmt.py" "$tree"
+python3 "$root/kernel/patches/patch-dpu-intf-wd-timer.py" "$tree"
+python3 "$root/kernel/patches/patch-dpu-intf-cmd-dsc.py" "$tree"
+python3 "$root/kernel/patches/patch-dpu-intf-dsc-nomux.py" "$tree"
+python3 "$root/kernel/patches/patch-dsi-widebus.py" "$tree"
+python3 "$root/kernel/patches/patch-dsi-phy-timing.py" "$tree"
+	python3 "$root/kernel/patches/patch-dsi-clkout-abl.py" "$tree"
+	python3 "$root/kernel/patches/patch-dsi-trig-abl.py" "$tree"
+	python3 "$root/kernel/patches/patch-dsi-phy-lane-ctrl1.py" "$tree"
+	python3 "$root/kernel/patches/patch-dsi-lane-force-abl.py" "$tree"
+	python3 "$root/kernel/patches/patch-dsi-tpg-off-abl.py" "$tree"
+	python3 "$root/kernel/patches/patch-dsi-hs-timer-abl.py" "$tree"
+		python3 "$root/kernel/patches/patch-dsi-err-mask-abl.py" "$tree"
+		python3 "$root/kernel/patches/patch-dsi-pclk-div6.py" "$tree"
+		python3 "$root/kernel/patches/patch-dpu-mdp-460.py" "$tree"
+		python3 "$root/kernel/patches/patch-dsi-phy-hstx.py" "$tree"
+	python3 "$root/kernel/patches/patch-dpu-intf-cfg2-abl.py" "$tree"
+	python3 "$root/kernel/patches/patch-dpu-intf-mux-clean.py" "$tree"
+	python3 "$root/kernel/patches/patch-dsi-cmd-comp-clean.py" "$tree"
+	python3 "$root/kernel/patches/patch-dsi-cmd-interleave.py" "$tree"
+	python3 "$root/kernel/patches/patch-msm-packed-pitch.py" "$tree"
+	python3 "$root/kernel/patches/patch-dpu-dual-vig.py" "$tree"
+	python3 "$root/kernel/patches/patch-dpu-two-sspp.py" "$tree"
+	python3 "$root/kernel/patches/patch-dsi-mdp-dstfmt-abl.py" "$tree"
+	python3 "$root/kernel/patches/patch-dpu-revert-solid-fill.py" "$tree"
+	python3 "$root/kernel/patches/patch-dpu-pp-dsc-endian.py" "$tree"
+	python3 "$root/kernel/patches/patch-dsi-abl-byteclk.py" "$tree"
+	python3 "$root/kernel/patches/patch-dsi-pll-abl-vco.py" "$tree"
+	python3 "$root/kernel/patches/patch-dpu-lm-blend-abl.py" "$tree"
+	python3 "$root/kernel/patches/patch-dpu-ctl-mix-abl.py" "$tree"
+
+	python3 - "$tree" <<'PY'
 import pathlib, sys
 tree = pathlib.Path(sys.argv[1])
 
@@ -142,6 +177,9 @@ dsi = '''
 &mdss_dsi0_out {
 	data-lanes = <0 1 2 3>;
 	remote-endpoint = <&panel_in_0>;
+	/* #10 vsync_p and #11 vsync_s both left wait_for_idle -110.
+	 * Watchdog TE isolates gpio66 from scanout/DSC/PHY. */
+	qcom,te-source = "timer0";
 };
 
 &mdss_dsi0_phy {
