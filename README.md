@@ -15,10 +15,11 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 | Armbian trixie / kernel 6.18 `current` | boots from `boot_a` |
 | USB Type-C gadget (NCM, `172.16.42.1`) | works (`usb_1` / `a600000`, HS only). May not re-enumerate after a display-DTB reboot; Wi-Fi SSH still works. |
 | QCA6390 Wi-Fi (`ath11k_pci`) | works **with the DTB in this repo** |
-| Power key / 5 min idle blank | `kebab-powerd` (`simpledrm` on the shipped DTB, `msmdrmfb` on kebab-dsi) |
+| Power key / 5 min idle blank | `kebab-powerd`: DCS backlight 0 on kebab-dsi; `simpledrm` fb blank on the shipped DTB |
 | Time / RTC | NTP + `fake-hwclock`. PMIC RTC is read-only (`SET_TIME` → `ENODEV`). |
 | SSH | keys only (overlay drop-in). USB gadget is the recovery path. |
-| `msm-mdss` / panel / GPU | **Linux fbcon** on `6.18.43-kebab-dsi` + display DTB (AMB655X 1080×2400, `msm` 1.13). GPU still off. Shipped `dtb/` still has `&dispcc` disabled. Do not enable `dispcc` alone. |
+| Display | **Linux fbcon** on kebab-dsi (AMB655X 1080×2400, `msm` 1.13). Shipped `dtb/` still has `&dispcc` disabled. |
+| GPU | still **disabled** |
 | Type-C host / OTG | not done (`usb_2` is the internal host) |
 | Charge limit (80%) | **not** possible. Only the bq27541 gauge is bound; SMB5 is disabled. |
 | Android restore | GPT kept; you need your own stock images |

@@ -211,7 +211,7 @@ in Armbian current.
 
 `&gpu` is also `disabled` in the kebab DTS. That is separate.
 
-## Power key
+## Power key / blanking
 
 `pm8941_pwrkey` is `/dev/input/event1`. systemd-logind defaults to
 `HandlePowerKey=poweroff`. The overlay sets that to `ignore` and runs
@@ -223,6 +223,14 @@ in Armbian current.
 | hold 3 s | `systemctl poweroff --force`, then sysrq `o` |
 | 5 min idle (screen on) | blank |
 | Power + Vol-Up 15–20 s | PMIC hard reset (hardware, always) |
+
+On kebab-dsi, `kebab-display off` writes DCS brightness 0 and leaves the
+DSI link up. `fb0/blank=4` is DRM DPMS Off and unprepares the panel
+(sleep, reset, rails) — do not use that for lock / idle. Kernel
+`consoleblank` is 0 so the VT helper cannot DPMS behind our back.
+
+On the shipped DTB there is no msm backlight. That path still paints
+black and blanks `simpledrm`.
 
 ## Downstream panel (what the 8T actually has)
 

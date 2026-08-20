@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """OnePlus 8T (kebab) power-key and idle-blank daemon.
 
-Short press: toggle framebuffer blank (lock / wake).
+Short press: toggle display (DCS backlight 0 on kebab-dsi, fb blank on simpledrm).
 Hold 3s: force poweroff.
 No key/volume activity for 5 minutes while the screen is on: blank.
+Kernel consoleblank is left at 0 so drm_fb_helper does not DPMS-unprepare.
 """
 
 from __future__ import annotations
@@ -103,7 +104,9 @@ def main() -> int:
         except OSError as exc:
             log(f"skip {path}: {exc}")
 
-    write_sysfs("/sys/module/kernel/parameters/consoleblank", str(IDLE_BLANK_SEC))
+    # Idle blank is kebab-display, not VT consoleblank. On msmdrmfb a
+    # kernel blank is DRM DPMS Off and unprepares the panel.
+    write_sysfs("/sys/module/kernel/parameters/consoleblank", "0")
     write_sysfs("/proc/sys/kernel/sysrq", "1")
     if not STATE_PATH.exists():
         STATE_PATH.write_text("on\n", encoding="ascii")

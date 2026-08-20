@@ -1,6 +1,10 @@
 #!/bin/sh
-# Blank / unblank the kebab framebuffer console (simpledrm or msmdrmfb).
-# Prefer fb0 blank; also poke a backlight if msm created one.
+# Blank / unblank the kebab panel.
+#
+# kebab-dsi (msmdrmfb + AMB655X backlight): DCS brightness 0. The link
+# stays up. Do not fb0/blank=4 — that is DRM DPMS Off and unprepares the
+# panel (sleep, reset, rails).
+# simpledrm (no msm backlight): paint black + fb blank, same as before.
 set -eu
 
 STATE=/run/kebab-display.state
@@ -15,6 +19,27 @@ read_state() {
 	fi
 }
 
+have_msm_backlight() {
+	for bl in /sys/class/backlight/*/brightness; do
+		[ -w "$bl" ] || continue
+		return 0
+	done
+	return 1
+}
+
+set_backlight() {
+	want=$1
+	for bl in /sys/class/backlight/*/brightness; do
+		[ -w "$bl" ] || continue
+		if [ "$want" = max ]; then
+			max=$(cat "$(dirname "$bl")/max_brightness" 2>/dev/null) || continue
+			echo "$max" > "$bl" 2>/dev/null || true
+		else
+			echo "$want" > "$bl" 2>/dev/null || true
+		fi
+	done
+}
+
 paint_black() {
 	[ -w "$FBDEV" ] || return 0
 	dd if=/dev/zero of="$FBDEV" bs=1024k count=12 status=none 2>/dev/null || true
@@ -22,19 +47,19 @@ paint_black() {
 
 display_on() {
 	echo 0 > "$FB" 2>/dev/null || true
-	for bl in /sys/class/backlight/*/brightness; do
-		[ -w "$bl" ] || continue
-		max=$(cat "$(dirname "$bl")/max_brightness" 2>/dev/null) || continue
-		echo "$max" > "$bl" 2>/dev/null || true
-	done
+	set_backlight max
 	setterm --blank=poke --term linux < /dev/tty1 2>/dev/null || true
 	echo on > "$STATE"
 }
 
 display_off() {
-	paint_black
-	echo 4 > "$FB" 2>/dev/null || true
-	setterm --blank=force --term linux < /dev/tty1 2>/dev/null || true
+	if have_msm_backlight; then
+		set_backlight 0
+	else
+		paint_black
+		echo 4 > "$FB" 2>/dev/null || true
+		setterm --blank=force --term linux < /dev/tty1 2>/dev/null || true
+	fi
 	echo off > "$STATE"
 }
 

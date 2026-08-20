@@ -110,7 +110,7 @@ rootfstype=ext4
 
 - USB gadget: `ssh root@172.16.42.1`. Change the root password immediately; do not commit it anywhere.
 - Copy [`overlay/`](../overlay/) and [`scripts/`](../scripts/) onto the phone (see the README). Wi-Fi: copy `20-wifi.example.yaml` to `/etc/netplan/20-wifi.yaml` and put **your** SSID there. Never add that file to git.
-- Stock image display is the bootloader framebuffer via `simpledrm`. The display DTB (`kebab-dsi`) brings up Linux `msmdrmfb` / fbcon — see [display.md](display.md). Power key and idle blank come from `kebab-powerd` on either path.
+- Stock image display is the bootloader framebuffer via `simpledrm`. The display DTB (`kebab-dsi`) brings up Linux `msmdrmfb` / fbcon — see [display.md](display.md). Power key and idle blank come from `kebab-powerd`: DCS backlight 0 on kebab-dsi, fb blank on `simpledrm`.
 - Do **not** flip `dispcc` to `okay` by itself. That hang is documented in [display.md](display.md).
 
 ## Rescue
