@@ -9,10 +9,19 @@ On **kebab-dsi**, the PM8150B SMB5 charger is bound. Clearing
 feed VSYS (USB-C as PSU, pack as UPS). The shipped `dtb/` (dispcc off)
 still leaves SMB5 disabled.
 
-There is no `charge_control_end_threshold`. 80% is userspace: watch
-`bq27541-0/capacity` and write `0`/`1` to SMB5. Probe's init seq turns
-charging **on**, so a reboot starts charging again until something writes
-`0`.
+There is no `charge_control_end_threshold`. Manage the switch with
+[`scripts/kebab-charge`](../scripts/kebab-charge) (`/usr/local/sbin/kebab-charge`
+on the phone). Probe's init seq turns charging **on**, so a reboot starts
+charging again until `kebab-charge stop`.
+
+```sh
+kebab-charge status
+kebab-charge stop     # park the pack
+kebab-charge start    # allow charge
+```
+
+`start`/`stop` are aliases for `on`/`off`. `install-overlay.sh` installs
+the script.
 
 ## What is bound (kebab-dsi)
 
@@ -21,14 +30,8 @@ bq27541-0          type=Battery   i2c16 @ 0x55   bq27xxx-battery
 pm8150b-charger    type=USB       spmi charger@1000   qcom-pm8150b-charger
 ```
 
-Stop / resume:
-
-```sh
-echo 0 > /sys/class/power_supply/pm8150b-charger/charging_enabled
-echo 1 > /sys/class/power_supply/pm8150b-charger/charging_enabled
-```
-
-Live check: `pm8150b-charger/status` goes `Not charging` / `Charging`.
+Under the hood that is `pm8150b-charger/charging_enabled`. Live check:
+`kebab-charge status` (SMB5 `Not charging` / `Charging`).
 `bq27541-0/status` is a bad observer at 1–2 mA trickle (gauge still says
 Charging). `pm8150b-charger/current_now` is the **USB-in IIO** channel,
 not IBAT — it reads 0 when the switcher is off even though VBUS is up.

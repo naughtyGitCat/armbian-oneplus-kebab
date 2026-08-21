@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SMB5 battery-side charge switch on kebab-dsi.
-# Usage: kebab-charge [on|off|status]
+# Usage: kebab-charge [start|stop|status]
 set -euo pipefail
 
 psy=/sys/class/power_supply/pm8150b-charger
@@ -13,11 +13,11 @@ fi
 
 cmd=${1:-status}
 case "$cmd" in
-on)  echo 1 > "$psy/charging_enabled" ;;
-off) echo 0 > "$psy/charging_enabled" ;;
+start|on)  echo 1 > "$psy/charging_enabled" ;;
+stop|off)  echo 0 > "$psy/charging_enabled" ;;
 status) ;;
 *)
-	echo "usage: $0 [on|off|status]" >&2
+	echo "usage: $0 [start|stop|status]" >&2
 	exit 2
 	;;
 esac

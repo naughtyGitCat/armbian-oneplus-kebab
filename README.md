@@ -21,7 +21,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 | Display | **Linux fbcon** on kebab-dsi (AMB655X 1080×2400, `msm` 1.13). Shipped `dtb/` still has `&dispcc` disabled. |
 | GPU | still **disabled** |
 | Type-C host / OTG | not done (`usb_2` is the internal host) |
-| Charge limit (80%) | kebab-dsi: SMB5 bound. `echo 0 > …/pm8150b-charger/charging_enabled` stops charge (no `charge_control_end_threshold`; reboot re-enables). |
+| Charge limit (80%) | kebab-dsi: `kebab-charge start` / `stop` / `status`. No `charge_control_end_threshold`; reboot re-enables until `stop`. |
 | Android restore | GPT kept; you need your own stock images |
 
 ## Docs
