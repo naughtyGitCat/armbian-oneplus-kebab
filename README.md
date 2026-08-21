@@ -35,13 +35,72 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 - [Headless (timezone, RTC, SSH)](docs/headless.md)
 - [Do not leak host config](SECURITY.md)
 
+## Releases
+
+Prebuilt images live on [GitHub Releases](https://github.com/naughtyGitCat/armbian-oneplus-kebab/releases), not in git. Current bring-up tag: [`6.18.43-kebab-dsi-66`](https://github.com/naughtyGitCat/armbian-oneplus-kebab/releases/tag/6.18.43-kebab-dsi-66).
+
+Pick **one** path.
+
+### A. Zero-install (no Armbian on the phone yet)
+
+Official-style split: Orange Fox `dd`, keep the stock GPT. UUID is already baked into the ext4 image **and** the boot cmdline. Do **not** mix with Armbian’s `boot_recovery.img`.
+
+| file | write to |
+|------|----------|
+| `Armbian_26.8.1_Oneplus-kebab_trixie_current_6.18.43-kebab-dsi_minimal.rootfs.img.xz` | `linux` |
+| `…minimal.boot_display.img.xz` | `boot_a` (Linux fbcon + SMB5 + GPU) |
+| `…minimal.boot_safe.img.xz` | rollback only (`dispcc` off) |
+
+```sh
+xz -dk Armbian_*_kebab-dsi_minimal.rootfs.img.xz
+xz -dk Armbian_*_kebab-dsi_minimal.boot_display.img.xz
+# Orange Fox adb — macOS fastboot dies on the rootfs
+adb push Armbian_*_kebab-dsi_minimal.rootfs.img /tmp/rootfs.img
+adb push Armbian_*_kebab-dsi_minimal.boot_display.img /tmp/boot.img
+adb shell 'dd if=/tmp/rootfs.img of=/dev/block/by-name/linux bs=4M; sync'
+adb shell 'dd if=/tmp/boot.img of=/dev/block/by-name/boot_a bs=4M; sync'
+adb reboot
+```
+
+First boot: `ssh root@172.16.42.1` (USB gadget). Change the password immediately. Copy `/root/20-wifi.example.yaml` → `/etc/netplan/20-wifi.yaml`, fill **your** SSID, `chmod 600`, `netplan apply`. Then `kebab-charge stop` (reboot re-enables charging).
+
+GPT backup, partition layout, and why not macOS `fastboot`: [docs/flashing.md](docs/flashing.md). Checksums: `SHA256SUMS` on the same release.
+
+### B. Already running Armbian (kernel hop only)
+
+Use the tarball, not the rootfs.
+
+| file | what |
+|------|------|
+| `kebab-dsi-6.18.43-66-full.tar.gz` | kernel, ramdisk, both DTBs, modules, overlay, `pack-abl-boot.sh`, ABL templates |
+| `kebab-dsi-6.18.43-66.tar.gz` | kernel + DTBs + modules only |
+
+The ABL templates in the full tarball have a **placeholder** root UUID (`00000000-…`). They will not mount root until you pack on the phone:
+
+```sh
+ver=6.18.43-kebab-dsi
+install -D -m 644 vmlinuz-${ver} /boot/vmlinuz-${ver}
+install -D -m 644 initrd.img-${ver} /boot/initrd.img-${ver}   # full tarball
+install -D -m 644 sm8250-oneplus-kebab.dtb sm8250-oneplus-kebab-dsi.dtb \
+  /usr/lib/linux-image-${ver}/qcom/
+tar -C / -xzf modules-${ver}.tar.gz
+depmod -a "${ver}"
+# /boot/armbianEnv.txt must keep extraargs=clk_ignore_unused
+pack-abl-boot.sh display --flash
+reboot
+```
+
+Keep a copy of the last known-good `boot_a` **on the host**. After boot: `kebab-charge stop`.
+
+Do **not** enable `&dispcc` or `&gpu` alone. Do not use kebab-dsi as the default `dtb/` in git.
+
 ## Build
 
-This tree does **not** replace `armbian/build`. First image = official kebab
-`current` (download or `compile.sh BOARD=oneplus-kebab`). Then apply this
-repo: Wi-Fi DTS + overlay on the phone, and — for Linux fbcon / SMB5 / GPU — a
-6.18 kernel with `scripts/apply-dsi-to-tree.sh --enable-display` packed
-via `scripts/pack-abl-boot.sh` on the device. Step-by-step:
+This tree does **not** replace `armbian/build`. For a first install prefer the
+zero-install split above. To rebuild from official kebab `current` instead:
+download or `compile.sh BOARD=oneplus-kebab`, then apply this repo (Wi-Fi DTS +
+overlay, and `scripts/apply-dsi-to-tree.sh --enable-display` packed with
+`scripts/pack-abl-boot.sh` on the device). Step-by-step:
 [docs/build.md](docs/build.md).
 
 ## Tree
@@ -58,7 +117,9 @@ scripts/          gadget, display, powerd, charge, apply-dsi, pack-abl
 reference/        stock 256 GB GPT text dumps (no serial)
 ```
 
-Images (`.img`, `.img.xz`) are gitignored on purpose. Get them from Armbian.
+Images (`.img`, `.img.xz`) are gitignored on purpose. Get them from
+[Releases](https://github.com/naughtyGitCat/armbian-oneplus-kebab/releases)
+(kebab-dsi) or from Armbian (stock `current`).
 
 ## Userspace overlay
 
