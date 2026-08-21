@@ -19,7 +19,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 | Time / RTC | NTP + `fake-hwclock`. PMIC RTC is read-only (`SET_TIME` → `ENODEV`). |
 | SSH | keys only (overlay drop-in). Hostname `oneplus-kebab-256g` — use `oneplus-kebab-256g.lan` (bare name is fake-ip). USB gadget is the recovery path. |
 | Display | **Linux fbcon** on kebab-dsi (AMB655X 1080×2400, `msm` 1.13). Shipped `dtb/` still has `&dispcc` disabled. |
-| GPU | Adreno 650.2 on kebab-dsi (`gpu-initialized: 1`, OnePlus zap). Mesa not tested. Safe DTB still has `&gpu` disabled. |
+| GPU | Adreno 650.2 on kebab-dsi (OnePlus zap, `devfreq-3d00000.gpu` cooling). Mesa not tested. Safe DTB still has `&gpu` disabled. |
 | Type-C host / OTG | not done (`usb_2` is the internal host) |
 | Charge limit (80%) | kebab-dsi: `kebab-charge start` / `stop` / `status`. No `charge_control_end_threshold`; reboot re-enables until `stop`. |
 | Android restore | GPT kept; you need your own stock images |

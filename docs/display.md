@@ -17,7 +17,7 @@ fill — `scripts/kebab-display` still does that, and it also works on
 | FB | `msmdrmfb` 1080×2400 32 bpp, packed `stride=4320` (ABL YSTRIDE; ABL simpledrm was 1080×2376) |
 | console | `getty@tty1` on `tty1`; `fb0` `virtual_size=1080,2400` |
 | backlight | `/sys/class/backlight/ae94000.dsi.0` DCS raw 0–2047 |
-| GPU | Adreno 650.2 bound to msm DPU (`gpu-initialized: 1`). Zap `qcom/sm8250/OnePlus/a650_zap.mbn`. Mesa not tested. |
+| GPU | Adreno 650.2 bound to msm DPU. Zap `qcom/sm8250/OnePlus/a650_zap.mbn`. Cooling `devfreq-3d00000.gpu` (85 °C tsens). Mesa not tested. |
 
 ## What actually made a picture
 
@@ -326,7 +326,8 @@ Reset is `GPIO_ACTIVE_LOW` in that tree. Downstream writes raw 1/0/1 on TLMM 75.
 
 A 6.18.43 tree with every Armbian `sm8250-6.18` patch plus
 [`kernel/panel-samsung-amb655x.c`](../kernel/panel-samsung-amb655x.c)
-(`CONFIG_DRM_PANEL_SAMSUNG_AMB655X=y`) builds as `6.18.43-kebab-dsi`.
+(`CONFIG_DRM_PANEL_SAMSUNG_AMB655X=y`, `CONFIG_DEVFREQ_THERMAL=y`)
+builds as `6.18.43-kebab-dsi`.
 6.18 has no `mipi_dsi_dcs_write_long_multi` — the vendored driver uses
 `mipi_dsi_dcs_write_seq_multi`. BTF is off for this bring-up kernel.
 

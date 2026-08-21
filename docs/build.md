@@ -181,5 +181,6 @@ Do not enable `&gpu` or `&dispcc` alone. Do not make kebab-dsi the shipped
 ## 5. After a display-DTB boot
 
 - Picture: Linux fbcon on AMB655X — [display.md](display.md)
+- GPU cooling: `devfreq-3d00000.gpu` at 85 °C tsens (needs `CONFIG_DEVFREQ_THERMAL`) — [display.md](display.md)
 - Charge: `kebab-charge stop` / `start` / `status` — [battery.md](battery.md)
 - Type-C gadget may not re-enumerate; Wi-Fi SSH still works
