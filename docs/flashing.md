@@ -13,6 +13,18 @@ To *build* the base image, fold the Wi-Fi DTS into armbian/build, or pack a
 display/SMB5 kernel after first boot, see [build.md](build.md). This page is
 the keep-GPT write path.
 
+## Zero-install kebab-dsi (this repo)
+
+Release [`6.18.43-kebab-dsi-66`](https://github.com/naughtyGitCat/armbian-oneplus-kebab/releases/tag/6.18.43-kebab-dsi-66) ships an official-style split so Orange Fox can `dd` Armbian with Linux fbcon already on:
+
+- `Armbian_26.8.1_Oneplus-kebab_trixie_current_6.18.43-kebab-dsi_minimal.rootfs.img.xz`
+- `…minimal.boot_display.img.xz` — kebab-dsi DTB (fbcon + SMB5 + GPU)
+- `…minimal.boot_safe.img.xz` — safe DTB (`dispcc` off); rollback only
+
+Base is official Armbian 26.8.1 kebab trixie current *minimal* plus kernel `6.18.43-kebab-dsi` `#66`. A **new** filesystem UUID is baked into the ext4 superblock, `/etc/fstab`, `/boot/armbianEnv.txt`, and the boot cmdline (`slot_suffix=_a clk_ignore_unused`). Do **not** mix these with the official `boot_recovery.img` (empty cmdline, different UUID).
+
+Same keep-GPT write path as below. After first boot: `ssh root@172.16.42.1`, change the password, copy `/root/20-wifi.example.yaml` → `/etc/netplan/20-wifi.yaml`, then `kebab-charge stop` (reboot re-enables charging).
+
 ## What you must keep
 
 Back up the stock GPT **before** you touch userdata:

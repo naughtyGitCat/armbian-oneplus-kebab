@@ -13,7 +13,7 @@ series that turns the display MSM edits into an Armbian kernel package.
 
 | goal | path |
 |------|------|
-| First install | Official Armbian kebab `current` image (download **or** `compile.sh`) + [flashing.md](flashing.md) (keep the stock GPT) |
+| First install | Official Armbian kebab `current`, **or** this repo's kebab-dsi split on the GitHub release (fbcon already on) + [flashing.md](flashing.md) (keep the stock GPT) |
 | Wi-Fi + SSH overlay | This repo's DTB + `scripts/install-overlay.sh` on a booted phone |
 | Linux fbcon + SMB5 + GPU | Kernel tree + `scripts/apply-dsi-to-tree.sh --enable-display`, then `pack-abl-boot.sh` **on the phone** |
 
