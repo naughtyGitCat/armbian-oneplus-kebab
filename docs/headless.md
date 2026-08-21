@@ -52,8 +52,13 @@ fallback. Never copy `/etc/shadow` or a hash into this tree.
 
 ## Hostname / Wi-Fi name
 
+This unit is `oneplus-kebab-256g`. DHCP/DNS is `oneplus-kebab-256g.lan`.
+A LAN proxy fake-ip will swallow the bare short name; SSH to the `.lan`
+name (or pin `HostName` in `~/.ssh/config`). USB gadget stays
+`root@172.16.42.1`.
+
 ```sh
-hostnamectl set-hostname oneplus-kebab
+hostnamectl set-hostname oneplus-kebab-256g
 ```
 
 [`overlay/etc/systemd/network/10-wlan.link`](../overlay/etc/systemd/network/10-wlan.link)

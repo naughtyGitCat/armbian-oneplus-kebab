@@ -1,67 +1,60 @@
 # Battery / charge limit
 
-The 8T pack is 2S Li-ion (`simple-battery` in the kebab DTS, 4.35 V/cell design).
-Sitting at 100% on USB for days is worse for calendar aging than parking around
-80%. **This tree cannot set that cap.** Charging continues in hardware with no
-Linux stop switch.
+The 8T pack is 2S Li-ion (`simple-battery` in the kebab DTS, 4.35 V/cell
+design). Sitting at 100% on USB for days is worse for calendar aging than
+parking around 80%.
 
-## What is bound
+On **kebab-dsi**, the PM8150B SMB5 charger is bound. Clearing
+`charging_enabled` stops the battery-side charge switch. VBUS can still
+feed VSYS (USB-C as PSU, pack as UPS). The shipped `dtb/` (dispcc off)
+still leaves SMB5 disabled.
 
-`/sys/class/power_supply/` has only the fuel gauge:
+There is no `charge_control_end_threshold`. 80% is userspace: watch
+`bq27541-0/capacity` and write `0`/`1` to SMB5. Probe's init seq turns
+charging **on**, so a reboot starts charging again until something writes
+`0`.
+
+## What is bound (kebab-dsi)
 
 ```
-bq27541-0   type=Battery   i2c16 @ 0x55   driver bq27xxx-battery
+bq27541-0          type=Battery   i2c16 @ 0x55   bq27xxx-battery
+pm8150b-charger    type=USB       spmi charger@1000   qcom-pm8150b-charger
 ```
 
-Typical always-plugged reading: `status=Charging`, `capacity=100`,
-`voltage_now` ≈ 8.67 V, `current_now` a 1–3 mA trickle. There is no
-`charge_control_end_threshold` / `charge_control_start_threshold` /
-`input_current_limit`. The gauge nodes look writable as root; writes only
-change reported values (or are rejected). They do **not** open the charge
-path.
+Stop / resume:
 
-`/sys/devices/platform/battery` is the DT `simple-battery` node. No driver.
+```sh
+echo 0 > /sys/class/power_supply/pm8150b-charger/charging_enabled
+echo 1 > /sys/class/power_supply/pm8150b-charger/charging_enabled
+```
 
-## Two chargers, neither usable
+Live check: `pm8150b-charger/status` goes `Not charging` / `Charging`.
+`bq27541-0/status` is a bad observer at 1–2 mA trickle (gauge still says
+Charging). `pm8150b-charger/current_now` is the **USB-in IIO** channel,
+not IBAT — it reads 0 when the switcher is off even though VBUS is up.
 
-### PM8150B SMB5 (main USB charge)
+## What stayed off
 
 Under `spmi@c440000/pmic@2`:
 
-| node | compatible | live status |
-|------|------------|-------------|
-| `charger@1000` | `qcom,pm8150b-charger` | **disabled** |
-| `typec@1500` | `qcom,pm8150b-typec` | **disabled** |
-| `usb-vbus-regulator@1100` | `qcom,pm8150b-vbus-reg` | **disabled** |
-| `fuel-gauge@4000` | `qcom,pm8150b-fg` | **disabled** |
+| node | compatible | status |
+|------|------------|--------|
+| `charger@1000` | `qcom,pm8150b-charger` | **okay** on kebab-dsi |
+| `typec@1500` | `qcom,pm8150b-typec` | disabled |
+| `usb-vbus-regulator@1100` | `qcom,pm8150b-vbus-reg` | disabled |
+| `fuel-gauge@4000` | `qcom,pm8150b-fg` | disabled |
 
-The platform driver `qcom-pm8150b-charger` is built in
-(`CONFIG_CHARGER_QCOM_SMB5=y`) and never binds, because the node is off.
-Those children come from the PM8150B include, not from the kebab DTS; kebab
-does not turn them on.
+USB gadget stays `dr_mode = peripheral`. 8 Pro enables charger+typec+vbus
+and flips USB to `otg` + role-switch; kebab did not. Charger probe still
+writes `TYPE_C_MODE_CFG` TRY_SNK (gadget risk). First boot with this DTB
+kept `usb0`.
 
-### BQ25980 (flash / switched-cap)
+Do not bind BQ25980 with the BQ25970 driver. `CONFIG_CHARGER_BQ25980` is
+unset. That IC is the flash charge pump, not the everyday CC-CV path.
 
-`&i2c5` / `charger@66` is `ti,bq25980`, `status = "ok"`, **unbound**.
-Armbian current has `CONFIG_CHARGER_BQ25970=y` (`bq2597x-charger`) and
-**`CONFIG_CHARGER_BQ25980 is not set`**. Do not bind the 25970 driver onto
-this chip. Even with the right driver this IC is a charge pump for fast
-charge, not the everyday USB CC-CV path, and it has no SOC stop.
+## Rollback
 
-## Do not enable only the SMB5 node
-
-Same class of footgun as [dispcc](display.md). The Type-C gadget
-(`usb_1` / `a600000`, NCM) shares that port with VBUS / Type-C. Flipping
-`charger@1000` (or Type-C / VBUS) to `okay` and rebooting can drop gadget
-SSH. Leave all four PM8150B power nodes disabled until they come up
-**together**, and only after the sysfs contract is known — ideally a real
-`charge_control_end_threshold` on the SMB5 psy.
-
-A userspace loop that watches `bq27541-0/capacity` cannot stop charge. Do
-not add one.
-
-## Until the charger binds
-
-Unplug Type-C when you do not need the gadget or adb. Wi-Fi SSH stays up
-independently (see [wifi.md](wifi.md)). That is the only safe way to get
-the pack off 8.7 V today.
+`/boot/boot_a.pre-smb5.img` and
+`sm8250-oneplus-kebab-dsi.dtb.pre-smb5` were saved on the phone before
+the first SMB5 flash. `pack-abl-boot.sh safe --flash` is the dispcc-off
+DTB (SMB5 off too).

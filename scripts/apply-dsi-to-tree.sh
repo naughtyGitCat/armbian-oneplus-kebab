@@ -146,6 +146,22 @@ text = text.replace(
     1,
 )
 
+if "&pm8150b_charger" not in text:
+    text = text.replace(
+        "&gpu {\n\tstatus = \"disabled\";\n};",
+        "&gpu {\n\tstatus = \"disabled\";\n};\n\n"
+        "/*\n"
+        " * Main USB CC-CV charger. typec / vbus / fg stay disabled — charger\n"
+        " * probe still writes TYPE_C_MODE_CFG TRY_SNK (gadget risk). 8 Pro\n"
+        " * enables charger+typec+vbus together; this is the smaller hop.\n"
+        " */\n"
+        "&pm8150b_charger {\n"
+        "\tstatus = \"okay\";\n"
+        "\tmonitored-battery = <&battery>;\n"
+        "};",
+        1,
+    )
+
 dsi = '''
 &mdss_dsi0 {
 	vdda-supply = <&vreg_l9a_1p2>;
@@ -233,7 +249,7 @@ if "panel_reset_pins:" not in text:
     text = text.replace(needle, pins + needle, 1)
 
 p.write_text(text)
-print("display chain enabled in kebab-dsi DTS (gpu/dsi1/dp still off)")
+print("display chain enabled in kebab-dsi DTS (gpu/dsi1/dp still off, SMB5 on)")
 PY
 	python3 - "$tree/arch/arm64/boot/dts/qcom/Makefile" <<'PY'
 from pathlib import Path

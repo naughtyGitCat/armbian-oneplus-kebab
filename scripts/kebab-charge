@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# SMB5 battery-side charge switch on kebab-dsi.
+# Usage: kebab-charge [on|off|status]
+set -euo pipefail
+
+psy=/sys/class/power_supply/pm8150b-charger
+g=/sys/class/power_supply/bq27541-0
+
+if [ ! -e "$psy/charging_enabled" ]; then
+	echo "pm8150b-charger not bound (need kebab-dsi DTB)" >&2
+	exit 1
+fi
+
+cmd=${1:-status}
+case "$cmd" in
+on)  echo 1 > "$psy/charging_enabled" ;;
+off) echo 0 > "$psy/charging_enabled" ;;
+status) ;;
+*)
+	echo "usage: $0 [on|off|status]" >&2
+	exit 2
+	;;
+esac
+
+printf 'smb5  enabled=%s status=%s usb_online=%s\n' \
+	"$(cat "$psy/charging_enabled")" \
+	"$(cat "$psy/status")" \
+	"$(cat "$psy/online")"
+if [ -e "$g/capacity" ]; then
+	printf 'gauge capacity=%s voltage_now=%s current_now=%s status=%s\n' \
+		"$(cat "$g/capacity")" \
+		"$(cat "$g/voltage_now")" \
+		"$(cat "$g/current_now")" \
+		"$(cat "$g/status")"
+fi

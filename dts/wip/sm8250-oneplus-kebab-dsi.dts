@@ -4,6 +4,8 @@
  * WIP display-enable DTS, compiled as sm8250-oneplus-kebab-dsi.dtb.
  * Do not ship this as the default kebab DTB. dispcc + DSI0 + 7 nm PHY +
  * Samsung AMB655X are okay together here; gpu / dsi1 / DP stay disabled.
+ * PM8150B SMB5 is okay so userspace can clear CHARGING_ENABLE; typec /
+ * vbus / fg stay disabled (USB gadget stays peripheral).
  * Safe first boot of a new kernel uses dts/sm8250-oneplus-kebab.dts
  * (dispcc still disabled). See docs/display.md.
  *
@@ -626,6 +628,16 @@
 
 &gpu {
 	status = "disabled";
+};
+
+/*
+ * Main USB CC-CV charger. typec / vbus / fg stay disabled — charger
+ * probe still writes TYPE_C_MODE_CFG TRY_SNK (gadget risk). 8 Pro
+ * enables charger+typec+vbus together; this is the smaller hop.
+ */
+&pm8150b_charger {
+	status = "okay";
+	monitored-battery = <&battery>;
 };
 
 &i2c1 {

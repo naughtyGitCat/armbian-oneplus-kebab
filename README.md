@@ -17,11 +17,11 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 | QCA6390 Wi-Fi (`ath11k_pci`) | works **with the DTB in this repo** |
 | Power key / 5 min idle blank | `kebab-powerd`: DCS backlight 0 on kebab-dsi; `simpledrm` fb blank on the shipped DTB |
 | Time / RTC | NTP + `fake-hwclock`. PMIC RTC is read-only (`SET_TIME` → `ENODEV`). |
-| SSH | keys only (overlay drop-in). USB gadget is the recovery path. |
+| SSH | keys only (overlay drop-in). Hostname `oneplus-kebab-256g` — use `oneplus-kebab-256g.lan` (bare name is fake-ip). USB gadget is the recovery path. |
 | Display | **Linux fbcon** on kebab-dsi (AMB655X 1080×2400, `msm` 1.13). Shipped `dtb/` still has `&dispcc` disabled. |
 | GPU | still **disabled** |
 | Type-C host / OTG | not done (`usb_2` is the internal host) |
-| Charge limit (80%) | **not** possible. Only the bq27541 gauge is bound; SMB5 is disabled. |
+| Charge limit (80%) | kebab-dsi: SMB5 bound. `echo 0 > …/pm8150b-charger/charging_enabled` stops charge (no `charge_control_end_threshold`; reboot re-enables). |
 | Android restore | GPT kept; you need your own stock images |
 
 ## Docs
@@ -30,7 +30,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 - [QCA6390 DTB](docs/dtb-wifi.md)
 - [Changing Wi-Fi](docs/wifi.md)
 - [Display (Linux fbcon on kebab-dsi)](docs/display.md)
-- [Battery / why there is no 80% cap](docs/battery.md)
+- [Battery / SMB5 charge switch](docs/battery.md)
 - [Headless (timezone, RTC, SSH)](docs/headless.md)
 - [Do not leak host config](SECURITY.md)
 
@@ -44,7 +44,7 @@ dts/wip/          display-enable DTS + panel sketch (not the shipped DTB)
 dtb/              prebuilt DTB (dispcc still disabled)
 kernel/           out-of-tree Samsung AMB655X panel driver
 overlay/          systemd / modules / netplan *example*
-scripts/          gadget, display, powerd, apply-dsi, pack-abl
+scripts/          gadget, display, powerd, charge, apply-dsi, pack-abl
 reference/        stock 256 GB GPT text dumps (no serial)
 ```
 
