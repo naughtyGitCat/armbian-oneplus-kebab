@@ -15,11 +15,11 @@ series that turns the display MSM edits into an Armbian kernel package.
 |------|------|
 | First install | Official Armbian kebab `current` image (download **or** `compile.sh`) + [flashing.md](flashing.md) (keep the stock GPT) |
 | Wi-Fi + SSH overlay | This repo's DTB + `scripts/install-overlay.sh` on a booted phone |
-| Linux fbcon + SMB5 | Kernel tree + `scripts/apply-dsi-to-tree.sh --enable-display`, then `pack-abl-boot.sh` **on the phone** |
+| Linux fbcon + SMB5 + GPU | Kernel tree + `scripts/apply-dsi-to-tree.sh --enable-display`, then `pack-abl-boot.sh` **on the phone** |
 
 `zz-update-abl-kernel` (Armbian postinst) always appends
 `sm8250-oneplus-kebab.dtb` and `dd`s `boot_a`. That is the **safe** DTB
-(`dispcc` still disabled). Display/SMB5 images must be packed with
+(`dispcc` still disabled). Display/SMB5/GPU images must be packed with
 [`scripts/pack-abl-boot.sh`](../scripts/pack-abl-boot.sh).
 
 ## 1. Base image from armbian/build
@@ -97,7 +97,7 @@ kebab-charge stop
 kebab-charge start
 ```
 
-## 4. Display + SMB5 kernel (this repo)
+## 4. Display + SMB5 + GPU kernel (this repo)
 
 Need a **6.18.x** kernel tree that already includes Armbian's
 `sm8250-6.18` patches (the tree `compile.sh` left in cache, or linux-stable
@@ -112,7 +112,8 @@ git clone https://github.com/naughtyGitCat/armbian-oneplus-kebab
 
 That copies the Wi-Fi kebab DTS, the AMB655X panel driver, the DSI/DPU
 python patches, and writes `sm8250-oneplus-kebab-dsi.dts` (dispcc + DSI0 +
-panel + **SMB5**; gpu / typec / vbus / fg stay off).
+panel + **SMB5** + **Adreno 650** with OnePlus zap; typec / vbus / fg stay
+off).
 
 ```sh
 cd "$TREE"
@@ -161,7 +162,7 @@ update-initramfs -c -k "${ver}"
 # Stage A: same kernel, dispcc still off
 pack-abl-boot.sh safe --flash
 reboot
-# Stage B: once SSH is back, Linux fbcon + SMB5
+# Stage B: once SSH is back, Linux fbcon + SMB5 + GPU
 pack-abl-boot.sh display --flash
 reboot
 ```
@@ -174,7 +175,7 @@ Rollback: `pack-abl-boot.sh safe --flash`, or `dd` a saved boot image from
 recovery ([flashing.md](flashing.md) rescue table).
 
 Do not enable `&gpu` or `&dispcc` alone. Do not make kebab-dsi the shipped
-`dtb/` default.
+`dtb/` default. GPU is only on the display DTB.
 
 ## 5. After a display-DTB boot
 

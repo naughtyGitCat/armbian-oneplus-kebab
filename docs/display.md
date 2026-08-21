@@ -17,7 +17,7 @@ fill — `scripts/kebab-display` still does that, and it also works on
 | FB | `msmdrmfb` 1080×2400 32 bpp, packed `stride=4320` (ABL YSTRIDE; ABL simpledrm was 1080×2376) |
 | console | `getty@tty1` on `tty1`; `fb0` `virtual_size=1080,2400` |
 | backlight | `/sys/class/backlight/ae94000.dsi.0` DCS raw 0–2047 |
-| GPU | still **disabled** (`no GPU device was found`) |
+| GPU | Adreno 650.2 bound to msm DPU (`gpu-initialized: 1`). Zap `qcom/sm8250/OnePlus/a650_zap.mbn`. Mesa not tested. |
 
 ## What actually made a picture
 
@@ -196,6 +196,8 @@ Safe-boot ABL vs Linux `#34` DPU fetch (the remaining picture-path delta):
 
 `#65` reverts `#38` solid-fill (`dpu_plane_flush` back on GEM + CSC). Live `getty@tty1` active, `fgconsole=1`, fb0 `virtual_size=1080,2400` `stride=4320`. Webcam burst after boot: **readable Linux fbcon** (systemd journal / getty), no snow, no flash. GEM fetch works. Keep pclk=bit/6 + MDP 460. Official `kebab.dtb` still has `&dispcc` disabled.
 
+DTB-only hop after `#65`: kebab-dsi `&gpu` okay + OnePlus zap. Same kernel. Debugfs `gpu-initialized: 1`; desk-cam still **readable Linux fbcon**.
+
 ## Do not enable only dispcc
 
 Setting `dispcc` to `okay` **by itself** and rebooting **hangs** the phone (no USB gadget, no
@@ -209,7 +211,31 @@ DSI0 + PHY + panel together. Likely causes of the hang, not fully isolated:
 Leave `dispcc` disabled in the **shipped** DTB. Do not treat out-of-tree trees as packaged
 in Armbian current.
 
-`&gpu` is also `disabled` in the kebab DTS. That is separate.
+## GPU
+
+kebab-dsi sets `&gpu` okay and names the OEM zap:
+
+```
+&gpu {
+    status = "okay";
+    zap-shader {
+        firmware-name = "qcom/sm8250/OnePlus/a650_zap.mbn";
+    };
+};
+```
+
+Live on `6.18.43-kebab-dsi`: `adreno 3d00000.gpu` binds as a component of
+`ae01000.display-controller`. SQE `qcom/a650_sqe.fw` and GMU
+`qcom/a650_gmu.bin` v2.1.8 load; debugfs `gpu-initialized: 1`, revision
+650 (6.5.0.2). `msm_dpu: no GPU device was found` is gone. Scanout is
+still DPU fbcon (`card1` / `renderD128` stay under the display
+controller). Mesa / kmscube not run.
+
+Non-fatal: dummy `vdd`/`vddcx` regulators, GPU cooling-device register
+failed, `gcc`/`gpucc` `sync_state()` pending on the unbound
+`3d6a000.gmu` platform device (GMU is a GPU accessory, not a standalone
+driver). Do not enable `&gpu` on the safe DTB. Do not ship kebab-dsi as
+`dtb/` default.
 
 ## Power key / blanking
 
@@ -309,7 +335,8 @@ copy: [`dts/wip/sm8250-oneplus-kebab-dsi.dts`](../dts/wip/sm8250-oneplus-kebab-d
 | `&mdss` | okay | okay |
 | `&mdss_dsi0` + panel `samsung,amb655x` | absent | okay |
 | `&mdss_dsi0_phy` | disabled | okay |
-| `&mdss_dsi1` / PHY / DP / `&gpu` | disabled | disabled |
+| `&mdss_dsi1` / PHY / DP | disabled | disabled |
+| `&gpu` | disabled | okay (OnePlus `a650_zap.mbn`) |
 | `&pm8150b_charger` | disabled | okay |
 
 `zz-update-abl-kernel` always appends `sm8250-oneplus-kebab.dtb` and `dd`s

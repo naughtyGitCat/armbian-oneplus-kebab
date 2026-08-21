@@ -10,14 +10,14 @@ mkdir -p "$out"
 
 list=$(ffmpeg -f avfoundation -list_devices true -i "" 2>&1 || true)
 idx=$(printf '%s\n' "$list" | python3 -c '
-import sys
+import re, sys
 for line in sys.stdin:
-    if "MacBook Air桌上视角相机" in line and "pineapple" not in line:
-        # [2] MacBook Air桌上视角相机
-        start = line.find("[")
-        end = line.find("]", start)
-        print(line[start+1:end])
-        break
+    if "MacBook Air桌上视角相机" in line and "pineapple" not in line.lower():
+        # ffmpeg prefixes "[AVFoundation indev @ 0x…] [N] name"
+        nums = re.findall(r"\[(\d+)\]", line)
+        if nums:
+            print(nums[-1])
+            break
 else:
     sys.exit("desk camera not listed")
 ')

@@ -146,10 +146,23 @@ text = text.replace(
     1,
 )
 
+gpu_off = "&gpu {\n\tstatus = \"disabled\";\n};"
+gpu_on = (
+    "&gpu {\n"
+    "\tstatus = \"okay\";\n\n"
+    "\tzap-shader {\n"
+    "\t\tfirmware-name = \"qcom/sm8250/OnePlus/a650_zap.mbn\";\n"
+    "\t};\n"
+    "};"
+)
+if 'firmware-name = "qcom/sm8250/OnePlus/a650_zap.mbn"' not in text:
+    if gpu_off not in text:
+        raise SystemExit("no &gpu disabled anchor")
+    text = text.replace(gpu_off, gpu_on, 1)
+
 if "&pm8150b_charger" not in text:
-    text = text.replace(
-        "&gpu {\n\tstatus = \"disabled\";\n};",
-        "&gpu {\n\tstatus = \"disabled\";\n};\n\n"
+    smb5 = (
+        "\n\n"
         "/*\n"
         " * Main USB CC-CV charger. typec / vbus / fg stay disabled — charger\n"
         " * probe still writes TYPE_C_MODE_CFG TRY_SNK (gadget risk). 8 Pro\n"
@@ -158,9 +171,13 @@ if "&pm8150b_charger" not in text:
         "&pm8150b_charger {\n"
         "\tstatus = \"okay\";\n"
         "\tmonitored-battery = <&battery>;\n"
-        "};",
-        1,
+        "};"
     )
+    if gpu_on not in text:
+        raise SystemExit("no &gpu okay anchor for SMB5")
+    text = text.replace(gpu_on, gpu_on + smb5, 1)
+
+
 
 dsi = '''
 &mdss_dsi0 {
@@ -249,7 +266,7 @@ if "panel_reset_pins:" not in text:
     text = text.replace(needle, pins + needle, 1)
 
 p.write_text(text)
-print("display chain enabled in kebab-dsi DTS (gpu/dsi1/dp still off, SMB5 on)")
+print("display chain enabled in kebab-dsi DTS (gpu+zap on, dsi1/dp still off, SMB5 on)")
 PY
 	python3 - "$tree/arch/arm64/boot/dts/qcom/Makefile" <<'PY'
 from pathlib import Path

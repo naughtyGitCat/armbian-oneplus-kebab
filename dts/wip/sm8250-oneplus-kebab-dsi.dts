@@ -3,9 +3,10 @@
 /*
  * WIP display-enable DTS, compiled as sm8250-oneplus-kebab-dsi.dtb.
  * Do not ship this as the default kebab DTB. dispcc + DSI0 + 7 nm PHY +
- * Samsung AMB655X are okay together here; gpu / dsi1 / DP stay disabled.
- * PM8150B SMB5 is okay so userspace can clear CHARGING_ENABLE; typec /
- * vbus / fg stay disabled (USB gadget stays peripheral).
+ * Samsung AMB655X + Adreno 650 (OnePlus zap) are okay here; dsi1 / DP
+ * stay disabled. PM8150B SMB5 is okay so userspace can clear
+ * CHARGING_ENABLE; typec / vbus / fg stay disabled (USB gadget stays
+ * peripheral).
  * Safe first boot of a new kernel uses dts/sm8250-oneplus-kebab.dts
  * (dispcc still disabled). See docs/display.md.
  *
@@ -627,7 +628,11 @@
 };
 
 &gpu {
-	status = "disabled";
+	status = "okay";
+
+	zap-shader {
+		firmware-name = "qcom/sm8250/OnePlus/a650_zap.mbn";
+	};
 };
 
 /*
