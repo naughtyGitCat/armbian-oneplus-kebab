@@ -26,6 +26,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 
 ## Docs
 
+- [Build / patch / pack / flash](docs/build.md)
 - [Flashing (keep the stock GPT)](docs/flashing.md)
 - [QCA6390 DTB](docs/dtb-wifi.md)
 - [Changing Wi-Fi](docs/wifi.md)
@@ -33,6 +34,15 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 - [Battery / SMB5 charge switch](docs/battery.md)
 - [Headless (timezone, RTC, SSH)](docs/headless.md)
 - [Do not leak host config](SECURITY.md)
+
+## Build
+
+This tree does **not** replace `armbian/build`. First image = official kebab
+`current` (download or `compile.sh BOARD=oneplus-kebab`). Then apply this
+repo: Wi-Fi DTS + overlay on the phone, and — for Linux fbcon / SMB5 — a
+6.18 kernel with `scripts/apply-dsi-to-tree.sh --enable-display` packed
+via `scripts/pack-abl-boot.sh` on the device. Step-by-step:
+[docs/build.md](docs/build.md).
 
 ## Tree
 
@@ -72,7 +82,8 @@ That live file must never land in git. To switch networks later, see
   `dts/patches/0001-sm8250-oneplus-kebab-qca6390-pmu-wifi.patch` still applies.
 
 A full `compile.sh` for sm8250 does not fit on a GitHub-hosted runner. Build
-images locally (or on a self-hosted runner) with [armbian/build](https://github.com/armbian/build).
+the *base* image locally with [armbian/build](https://github.com/armbian/build);
+this repo's kernel/DTB overlay is [docs/build.md](docs/build.md).
 
 ## License
 

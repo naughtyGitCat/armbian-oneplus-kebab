@@ -9,6 +9,10 @@ Board config lives in [armbian/build `oneplus-kebab.conf`](https://github.com/ar
 
 This repo documents a **keep-the-GPT** variant so Android can be restored later. It does **not** replace the whole UFS with a single Linux disk.
 
+To *build* the base image, fold the Wi-Fi DTS into armbian/build, or pack a
+display/SMB5 kernel after first boot, see [build.md](build.md). This page is
+the keep-GPT write path.
+
 ## What you must keep
 
 Back up the stock GPT **before** you touch userdata:

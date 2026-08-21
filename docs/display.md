@@ -298,9 +298,10 @@ A 6.18.43 tree with every Armbian `sm8250-6.18` patch plus
 6.18 has no `mipi_dsi_dcs_write_long_multi` — the vendored driver uses
 `mipi_dsi_dcs_write_seq_multi`. BTF is off for this bring-up kernel.
 
-`scripts/apply-dsi-to-tree.sh /path/to/linux` drops the driver and the
-Wi-Fi DTS. `--enable-display` also writes
-[`dts/wip/sm8250-oneplus-kebab-dsi.dts`](../dts/wip/sm8250-oneplus-kebab-dsi.dts):
+Compile / pack / flash steps: [build.md](build.md).
+`scripts/apply-dsi-to-tree.sh /path/to/linux --enable-display` drops the
+driver, the Wi-Fi DTS, and a kebab-dsi DTS in the kernel tree (checked-in
+copy: [`dts/wip/sm8250-oneplus-kebab-dsi.dts`](../dts/wip/sm8250-oneplus-kebab-dsi.dts)):
 
 | node | safe `kebab.dtb` | `kebab-dsi.dtb` |
 |---|---|---|
@@ -309,6 +310,7 @@ Wi-Fi DTS. `--enable-display` also writes
 | `&mdss_dsi0` + panel `samsung,amb655x` | absent | okay |
 | `&mdss_dsi0_phy` | disabled | okay |
 | `&mdss_dsi1` / PHY / DP / `&gpu` | disabled | disabled |
+| `&pm8150b_charger` | disabled | okay |
 
 `zz-update-abl-kernel` always appends `sm8250-oneplus-kebab.dtb` and `dd`s
 `boot_a`. Pack the display image with
