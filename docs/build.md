@@ -123,6 +123,7 @@ export CROSS_COMPILE=aarch64-linux-gnu-   # empty on native arm64
 ./scripts/config --set-str LOCALVERSION "-kebab-dsi"
 ./scripts/config --enable DRM_PANEL_SAMSUNG_AMB655X
 ./scripts/config --enable CHARGER_QCOM_SMB5
+./scripts/config --enable DEVFREQ_THERMAL
 ./scripts/config --disable DEBUG_INFO_BTF
 ./scripts/config --enable DEBUG_INFO_NONE
 make olddefconfig

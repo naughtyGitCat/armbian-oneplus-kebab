@@ -198,6 +198,8 @@ Safe-boot ABL vs Linux `#34` DPU fetch (the remaining picture-path delta):
 
 DTB-only hop after `#65`: kebab-dsi `&gpu` okay + OnePlus zap. Same kernel. Debugfs `gpu-initialized: 1`; desk-cam still **readable Linux fbcon**.
 
+Kernel hop after that: `CONFIG_DEVFREQ_THERMAL=y` (`#66`). Cooling `devfreq-3d00000.gpu` registers; `gpu-top-thermal` / `gpu-bottom-thermal` bind trip0 (85 °C passive). Dummy `vdd`/`vddcx` unchanged. Desk-cam still **readable Linux fbcon**.
+
 ## Do not enable only dispcc
 
 Setting `dispcc` to `okay` **by itself** and rebooting **hangs** the phone (no USB gadget, no
@@ -224,15 +226,19 @@ kebab-dsi sets `&gpu` okay and names the OEM zap:
 };
 ```
 
-Live on `6.18.43-kebab-dsi`: `adreno 3d00000.gpu` binds as a component of
+Live on `6.18.43-kebab-dsi` `#66`: `adreno 3d00000.gpu` binds as a component of
 `ae01000.display-controller`. SQE `qcom/a650_sqe.fw` and GMU
-`qcom/a650_gmu.bin` v2.1.8 load; debugfs `gpu-initialized: 1`, revision
-650 (6.5.0.2). `msm_dpu: no GPU device was found` is gone. Scanout is
-still DPU fbcon (`card1` / `renderD128` stay under the display
-controller). Mesa / kmscube not run.
+`qcom/a650_gmu.bin` v2.1.8 load; revision 650 (6.5.0.2).
+`msm_dpu: no GPU device was found` is gone. Scanout is still DPU fbcon
+(`card1` / `renderD128` stay under the display controller). Mesa /
+kmscube not run.
 
-Non-fatal: dummy `vdd`/`vddcx` regulators, GPU cooling-device register
-failed, `gcc`/`gpucc` `sync_state()` pending on the unbound
+`CONFIG_DEVFREQ_THERMAL=y` registers `devfreq-3d00000.gpu` (`max_state=5`,
+305–587 MHz). SoC `gpu-top-thermal` / `gpu-bottom-thermal` cooling-maps
+bind at 85 °C passive. That is GPU tsens throttle, not Android 48 °C
+skin or BCL. Dummy `vdd`/`vddcx` remains (`msm_gpu` still
+`regulator_get`s those names; real power is GMU CX/GX GDSC + OPP
+`opp-level`). `gcc`/`gpucc` `sync_state()` pending on the unbound
 `3d6a000.gmu` platform device (GMU is a GPU accessory, not a standalone
 driver). Do not enable `&gpu` on the safe DTB. Do not ship kebab-dsi as
 `dtb/` default.
