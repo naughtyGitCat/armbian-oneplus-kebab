@@ -16,7 +16,7 @@ root = Path(sys.argv[1] if len(sys.argv) > 1 else "/opt/kebab-kernel/linux")
 p = root / "drivers/gpu/drm/msm/dsi/dsi_host.c"
 text = p.read_text()
 
-if "kebab #58: no CLKLN_HS_FORCE" in text:
+if "kebab #58: do not OR CLKLN_HS_FORCE" in text:
     print("CLKLN_HS_FORCE already dropped")
     raise SystemExit(0)
 

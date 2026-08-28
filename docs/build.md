@@ -16,6 +16,7 @@ series that turns the display MSM edits into an Armbian kernel package.
 | First install | Official Armbian kebab `current`, **or** this repo's kebab-dsi split on the GitHub release (fbcon already on) + [flashing.md](flashing.md) (keep the stock GPT) |
 | Wi-Fi + SSH overlay | This repo's DTB + `scripts/install-overlay.sh` on a booted phone |
 | Linux fbcon + SMB5 + GPU | Kernel tree + `scripts/apply-dsi-to-tree.sh --enable-display`, then `pack-abl-boot.sh` **on the phone** |
+| Persistent reset diagnostics | Same kernel-tree apply path; see [diagnostics.md](diagnostics.md) before any reboot test |
 
 `zz-update-abl-kernel` (Armbian postinst) always appends
 `sm8250-oneplus-kebab.dtb` and `dd`s `boot_a`. That is the **safe** DTB
@@ -97,7 +98,7 @@ kebab-charge stop
 kebab-charge start
 ```
 
-## 4. Display + SMB5 + GPU kernel (this repo)
+## 4. Display + SMB5 + GPU + reset diagnostics kernel (this repo)
 
 Need a **6.18.x** kernel tree that already includes Armbian's
 `sm8250-6.18` patches (the tree `compile.sh` left in cache, or linux-stable
@@ -110,10 +111,12 @@ git clone https://github.com/naughtyGitCat/armbian-oneplus-kebab
 ./armbian-oneplus-kebab/scripts/apply-dsi-to-tree.sh "$TREE" --enable-display
 ```
 
-That copies the Wi-Fi kebab DTS, the AMB655X panel driver, the DSI/DPU
-python patches, and writes `sm8250-oneplus-kebab-dsi.dts` (dispcc + DSI0 +
+That copies the Wi-Fi kebab DTS (including the shared ramoops reservation),
+the AMB655X panel driver, the DSI/DPU patches, and the read-only PM8998 GEN2
+PON reason patch. It writes `sm8250-oneplus-kebab-dsi.dts` (dispcc + DSI0 +
 panel + **SMB5** + **Adreno 650** with OnePlus zap; typec / vbus / fg stay
-off).
+off). Both generated DTBs use the same ramoops region, but only kebab-dsi
+enables the display/GPU/SMB5 additions.
 
 ```sh
 cd "$TREE"
@@ -124,6 +127,13 @@ export CROSS_COMPILE=aarch64-linux-gnu-   # empty on native arm64
 ./scripts/config --enable DRM_PANEL_SAMSUNG_AMB655X
 ./scripts/config --enable CHARGER_QCOM_SMB5
 ./scripts/config --enable DEVFREQ_THERMAL
+./scripts/config --enable PSTORE
+./scripts/config --enable PSTORE_RAM
+./scripts/config --enable PSTORE_CONSOLE
+./scripts/config --enable PSTORE_PMSG
+./scripts/config --enable PSTORE_COMPRESS
+./scripts/config --set-val PSTORE_DEFAULT_KMSG_BYTES 262144
+./scripts/config --module POWER_RESET_QCOM_PON
 ./scripts/config --disable DEBUG_INFO_BTF
 ./scripts/config --enable DEBUG_INFO_NONE
 make olddefconfig

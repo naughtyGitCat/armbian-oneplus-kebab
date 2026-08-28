@@ -17,7 +17,7 @@ root = Path(sys.argv[1] if len(sys.argv) > 1 else "/opt/kebab-kernel/linux")
 p = root / "drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c"
 text = p.read_text()
 
-if "kebab #49: ABL LM blend" in text:
+if "kebab #49: ABL LM_BLEND0_OP" in text:
     print("LM blend already ABL 0x400 / op_mode 0")
     raise SystemExit(0)
 
