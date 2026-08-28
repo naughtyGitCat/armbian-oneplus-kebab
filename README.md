@@ -17,6 +17,7 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 | QCA6390 Wi-Fi (`ath11k_pci`) | works **with the DTB in this repo** |
 | Power key / 5 min idle blank | `kebab-powerd`: DCS backlight 0 on kebab-dsi; `simpledrm` fb blank on the shipped DTB |
 | Time / RTC | NTP + `fake-hwclock`. PMIC RTC is read-only (`SET_TIME` → `ENODEV`). |
+| Persistent reset diagnostics | Kernel #67 live: read-only PM8150 PON reasons work. Ramoops works, but normal PS_HOLD/ABL reboot does not retain its DRAM; panic/watchdog retention is untested. |
 | SSH | keys only (overlay drop-in). Hostname `oneplus-kebab-256g` — use `oneplus-kebab-256g.lan` (bare name is fake-ip). USB gadget is the recovery path. |
 | Display | **Linux fbcon** on kebab-dsi (AMB655X 1080×2400, `msm` 1.13). Shipped `dtb/` still has `&dispcc` disabled. |
 | GPU | Adreno 650.2 on kebab-dsi (OnePlus zap, `devfreq-3d00000.gpu` cooling). Mesa not tested. Safe DTB still has `&gpu` disabled. |
@@ -33,11 +34,12 @@ SM8250). Official board support is [`oneplus-kebab.conf`](https://github.com/arm
 - [Display (Linux fbcon on kebab-dsi)](docs/display.md)
 - [Battery / SMB5 charge switch](docs/battery.md)
 - [Headless (timezone, RTC, SSH)](docs/headless.md)
+- [Persistent reset diagnostics (ramoops/pstore + PMIC PON)](docs/diagnostics.md)
 - [Do not leak host config](SECURITY.md)
 
 ## Releases
 
-Prebuilt images live on [GitHub Releases](https://github.com/naughtyGitCat/armbian-oneplus-kebab/releases), not in git. Current bring-up tag: [`6.18.43-kebab-dsi-66`](https://github.com/naughtyGitCat/armbian-oneplus-kebab/releases/tag/6.18.43-kebab-dsi-66).
+Prebuilt images live on [GitHub Releases](https://github.com/naughtyGitCat/armbian-oneplus-kebab/releases), not in git. Current bring-up tag: [`6.18.43-kebab-dsi-67`](https://github.com/naughtyGitCat/armbian-oneplus-kebab/releases/tag/6.18.43-kebab-dsi-67).
 
 Pick **one** path.
 
@@ -51,18 +53,27 @@ Official-style split: Orange Fox `dd`, keep the stock GPT. UUID is already baked
 | `…minimal.boot_display.img.xz` | `boot_a` (Linux fbcon + SMB5 + GPU) |
 | `…minimal.boot_safe.img.xz` | rollback only (`dispcc` off) |
 
+The root account is locked and the image contains no reusable password hash or
+preinstalled SSH key. Before the first boot, inject **your public key** from
+Orange Fox; otherwise SSH cannot authenticate:
+
 ```sh
 xz -dk Armbian_*_kebab-dsi_minimal.rootfs.img.xz
 xz -dk Armbian_*_kebab-dsi_minimal.boot_display.img.xz
 # Orange Fox adb — macOS fastboot dies on the rootfs
 adb push Armbian_*_kebab-dsi_minimal.rootfs.img /tmp/rootfs.img
 adb push Armbian_*_kebab-dsi_minimal.boot_display.img /tmp/boot.img
-adb shell 'dd if=/tmp/rootfs.img of=/dev/block/by-name/linux bs=4M; sync'
-adb shell 'dd if=/tmp/boot.img of=/dev/block/by-name/boot_a bs=4M; sync'
+adb push ~/.ssh/id_ed25519.pub /tmp/kebab-root.pub  # use your actual .pub path
+adb shell 'dd if=/tmp/rootfs.img of=/dev/block/by-name/linux bs=4M && sync'
+adb shell 'mkdir -p /tmp/kebab-root && mount -t ext4 /dev/block/by-name/linux /tmp/kebab-root && mkdir -p /tmp/kebab-root/root/.ssh && cp /tmp/kebab-root.pub /tmp/kebab-root/root/.ssh/authorized_keys && chmod 700 /tmp/kebab-root/root/.ssh && chmod 600 /tmp/kebab-root/root/.ssh/authorized_keys && sync && umount /tmp/kebab-root'
+adb shell 'dd if=/tmp/boot.img of=/dev/block/by-name/boot_a bs=4M && sync'
 adb reboot
 ```
 
-First boot: `ssh root@172.16.42.1` (USB gadget). Change the password immediately. Copy `/root/20-wifi.example.yaml` → `/etc/netplan/20-wifi.yaml`, fill **your** SSID, `chmod 600`, `netplan apply`. Then `kebab-charge stop` (reboot re-enables charging).
+First boot: `ssh root@172.16.42.1` (USB gadget, keys only). Optionally run
+`passwd` for local-console recovery. Copy `/root/20-wifi.example.yaml` →
+`/etc/netplan/20-wifi.yaml`, fill **your** SSID, `chmod 600`, `netplan apply`.
+Then `kebab-charge stop` (reboot re-enables charging).
 
 GPT backup, partition layout, and why not macOS `fastboot`: [docs/flashing.md](docs/flashing.md). Checksums: `SHA256SUMS` on the same release.
 
@@ -72,25 +83,33 @@ Use the tarball, not the rootfs.
 
 | file | what |
 |------|------|
-| `kebab-dsi-6.18.43-66-full.tar.gz` | kernel, ramdisk, both DTBs, modules, overlay, `pack-abl-boot.sh`, ABL templates |
-| `kebab-dsi-6.18.43-66.tar.gz` | kernel + DTBs + modules only |
+| `kebab-dsi-6.18.43-67-full.tar.gz` | kernel, sanitized ramdisk, both DTBs, modules, overlay, `pack-abl-boot.sh`, ABL templates |
+| `kebab-dsi-6.18.43-67.tar.gz` | kernel + DTBs + modules only |
 
 The ABL templates in the full tarball have a **placeholder** root UUID (`00000000-…`). They will not mount root until you pack on the phone:
 
 ```sh
 ver=6.18.43-kebab-dsi
 install -D -m 644 vmlinuz-${ver} /boot/vmlinuz-${ver}
-install -D -m 644 initrd.img-${ver} /boot/initrd.img-${ver}   # full tarball
 install -D -m 644 sm8250-oneplus-kebab.dtb sm8250-oneplus-kebab-dsi.dtb \
   /usr/lib/linux-image-${ver}/qcom/
 tar -C / -xzf modules-${ver}.tar.gz
 depmod -a "${ver}"
+if [ -f initrd.img-${ver} ]; then
+  install -D -m 644 initrd.img-${ver} /boot/initrd.img-${ver}  # full tarball
+else
+  update-initramfs -u -k "${ver}"                              # slim tarball
+fi
 # /boot/armbianEnv.txt must keep extraargs=clk_ignore_unused
 pack-abl-boot.sh display --flash
 reboot
 ```
 
 Keep a copy of the last known-good `boot_a` **on the host**. After boot: `kebab-charge stop`.
+
+On #67, PM8150 reset-reason logging works. Ramoops write/read/rebind works in
+one boot, but the tested ordinary PS_HOLD/ABL reboot does not retain that DRAM;
+panic/watchdog retention remains untested. See [persistent reset diagnostics](docs/diagnostics.md).
 
 Do **not** enable `&dispcc` or `&gpu` alone. Do not use kebab-dsi as the default `dtb/` in git.
 

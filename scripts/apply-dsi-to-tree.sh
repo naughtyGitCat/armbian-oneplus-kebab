@@ -22,6 +22,7 @@ done
 cp "$root/kernel/panel-samsung-amb655x.c" \
 	"$tree/drivers/gpu/drm/panel/panel-samsung-amb655x.c"
 
+python3 "$root/kernel/patches/patch-qcom-pon-reset-reason.py" "$tree"
 python3 "$root/kernel/patches/patch-dsi-slice-per-pkt.py" "$tree"
 python3 "$root/kernel/patches/patch-dpu-single-dsc.py" "$tree"
 python3 "$root/kernel/patches/patch-dsi-dsc-log.py" "$tree"
